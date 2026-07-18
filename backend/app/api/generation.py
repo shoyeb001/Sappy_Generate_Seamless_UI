@@ -19,9 +19,11 @@ async def create_project(request: CreateProjectRequest) -> CreateProjectResponse
 
     return CreateProjectResponse(
         project_id=str(uuid4()),
-        status="planned",
+        status="generated",
         prompt=request.prompt,
         classification=result["classification"],
         project=result["project"],
+        design_system=result["design_system"],
         screens=result["screens"],
+        generated_screens=result["generated_screens"],
     )

@@ -21,6 +21,38 @@ class ProjectPlan(BaseModel):
     device_type: Literal["desktop", "mobile", "tablet", "responsive"]
 
 
+class ColorSystem(BaseModel):
+    primary: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    secondary: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    accent: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    background: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    surface: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    text_primary: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+    text_secondary: str = Field(..., pattern=r"^#[0-9A-Fa-f]{6}$")
+
+
+class TypographySystem(BaseModel):
+    heading_font: str
+    body_font: str
+    heading_large: str
+    heading_medium: str
+    body: str
+    small: str
+
+
+class UIStyle(BaseModel):
+    border_radius: str
+    spacing_scale: list[str] = Field(..., min_length=3)
+    shadow_style: Literal["none", "subtle", "soft", "medium", "dramatic"]
+    visual_direction: str
+
+
+class DesignSystem(BaseModel):
+    colors: ColorSystem
+    typography: TypographySystem
+    ui_style: UIStyle
+
+
 class ScreenPlan(BaseModel):
     id: str
     name: str
@@ -28,10 +60,20 @@ class ScreenPlan(BaseModel):
     purpose: str
 
 
+class GeneratedScreen(BaseModel):
+    id: str
+    name: str
+    html: str
+    width: int = Field(..., gt=0)
+    height: int = Field(..., gt=0)
+
+
 class CreateProjectResponse(BaseModel):
     project_id: str
-    status: Literal["planned"]
+    status: Literal["planned", "generated"]
     prompt: str
     classification: ScreenClassification
     project: ProjectPlan
+    design_system: DesignSystem
     screens: list[ScreenPlan] = Field(..., min_length=1, max_length=5)
+    generated_screens: list[GeneratedScreen] = Field(..., min_length=1, max_length=5)
