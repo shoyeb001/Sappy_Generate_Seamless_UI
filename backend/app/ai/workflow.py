@@ -5,34 +5,19 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from app.ai.llm import get_llm
-from app.schemas.generation import ScreenClassification
+from app.ai.prompts import CLASSIFY_PROMPT, PLAN_PROJECT_PROMPT, PLAN_SCREENS_PROMPT
+from app.schemas.generation import ProjectPlan, ScreenClassification, ScreenPlan
 
 
 class GenerationState(TypedDict, total=False):
     prompt: str
     classification: ScreenClassification
+    project: ProjectPlan
+    screens: list[ScreenPlan]
     errors: list[str]
 
 
-SYSTEM_PROMPT = """You classify a user's UI generation prompt for a hackathon UI generator.
-Return only valid JSON matching this schema:
-{
-  "screen_count": number from 1 to 5,
-  "reasoning": "short explanation",
-  "suggested_screens": ["screen name"]
-}
-
-Rules:
-- If the user asks for one page, one dashboard, one screen, or a landing page, choose 1.
-- If the user ask for number of screen then return that number of screens but not more than 5.
-- If the user describes a full app, choose the minimum useful set of screens.
-- Never return more than 5 screens.
-- Use realistic product screen names.
-"""
-
-
 def _fallback_classification(prompt: str) -> ScreenClassification:
-    print("Using fallback classification for prompt:", prompt)
     normalized_prompt = prompt.lower()
     single_screen_terms = ["single", "one page", "one screen", "landing page", "dashboard"]
 
@@ -50,6 +35,33 @@ def _fallback_classification(prompt: str) -> ScreenClassification:
     )
 
 
+def _fallback_project(prompt: str) -> ProjectPlan:
+    return ProjectPlan(
+        name="Generated UI",
+        type="Application",
+        description=f"A generated UI concept based on: {prompt[:120]}",
+        target_users=["End users"],
+        device_type="responsive",
+    )
+
+
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "screen"
+
+
+def _fallback_screens(classification: ScreenClassification) -> list[ScreenPlan]:
+    return [
+        ScreenPlan(
+            id=_slugify(name),
+            name=name,
+            description=f"A {name.lower()} interface for the requested product.",
+            purpose=f"Help users complete the {name.lower()} workflow.",
+        )
+        for name in classification.suggested_screens[:5]
+    ]
+
+
 def _extract_json(text: str) -> dict:
     match = re.search(r"\{.*\}", text, flags=re.DOTALL)
     if not match:
@@ -58,38 +70,89 @@ def _extract_json(text: str) -> dict:
     return json.loads(match.group(0))
 
 
+async def _call_json_node(system_prompt: str, user_content: str) -> dict:
+    llm = get_llm()
+    content = await llm.chat(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content},
+        ],
+        temperature=0.2,
+        max_tokens=900,
+    )
+    return _extract_json(content)
+
+
 async def classify_required_pages(state: GenerationState) -> GenerationState:
     prompt = state["prompt"]
 
     try:
-        llm = get_llm()
-        content = await llm.chat(
-            [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.2,
-            max_tokens=600,
-        )
-        print("LLM response:", content)
-        classification = ScreenClassification.model_validate(_extract_json(content))
-        return {
-            **state,
-            "classification": classification,
-        }
+        payload = await _call_json_node(CLASSIFY_PROMPT, prompt)
+        classification = ScreenClassification.model_validate(payload)
+        return {**state, "classification": classification}
     except Exception as exc:
         return {
             **state,
             "classification": _fallback_classification(prompt),
-            "errors": [*state.get("errors", []), str(exc)],
+            "errors": [*state.get("errors", []), f"classify_required_pages: {exc}"],
+        }
+
+
+async def plan_project(state: GenerationState) -> GenerationState:
+    prompt = state["prompt"]
+
+    try:
+        payload = await _call_json_node(PLAN_PROJECT_PROMPT, prompt)
+        project = ProjectPlan.model_validate(payload)
+        return {**state, "project": project}
+    except Exception as exc:
+        return {
+            **state,
+            "project": _fallback_project(prompt),
+            "errors": [*state.get("errors", []), f"plan_project: {exc}"],
+        }
+
+
+async def plan_screens(state: GenerationState) -> GenerationState:
+    prompt = state["prompt"]
+    classification = state["classification"]
+    project = state["project"]
+
+    context = json.dumps(
+        {
+            "user_prompt": prompt,
+            "project": project.model_dump(),
+            "classification": classification.model_dump(),
+        },
+        indent=2,
+    )
+
+    try:
+        payload = await _call_json_node(PLAN_SCREENS_PROMPT, context)
+        screens = [ScreenPlan.model_validate(screen) for screen in payload["screens"][:5]]
+        if not screens:
+            raise ValueError("Screen planner returned no screens")
+
+        return {**state, "screens": screens}
+    except Exception as exc:
+        return {
+            **state,
+            "screens": _fallback_screens(classification),
+            "errors": [*state.get("errors", []), f"plan_screens: {exc}"],
         }
 
 
 def build_generation_graph():
     graph = StateGraph(GenerationState)
     graph.add_node("classify_required_pages", classify_required_pages)
+    graph.add_node("plan_project", plan_project)
+    graph.add_node("plan_screens", plan_screens)
+
     graph.add_edge(START, "classify_required_pages")
-    graph.add_edge("classify_required_pages", END)
+    graph.add_edge("classify_required_pages", "plan_project")
+    graph.add_edge("plan_project", "plan_screens")
+    graph.add_edge("plan_screens", END)
+
     return graph.compile()
 
 

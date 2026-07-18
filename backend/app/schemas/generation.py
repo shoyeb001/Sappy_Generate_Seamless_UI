@@ -13,8 +13,25 @@ class ScreenClassification(BaseModel):
     suggested_screens: list[str] = Field(..., min_length=1, max_length=5)
 
 
+class ProjectPlan(BaseModel):
+    name: str
+    type: str
+    description: str
+    target_users: list[str] = Field(..., min_length=1)
+    device_type: Literal["desktop", "mobile", "tablet", "responsive"]
+
+
+class ScreenPlan(BaseModel):
+    id: str
+    name: str
+    description: str
+    purpose: str
+
+
 class CreateProjectResponse(BaseModel):
     project_id: str
-    status: Literal["classified"]
+    status: Literal["planned"]
     prompt: str
     classification: ScreenClassification
+    project: ProjectPlan
+    screens: list[ScreenPlan] = Field(..., min_length=1, max_length=5)
