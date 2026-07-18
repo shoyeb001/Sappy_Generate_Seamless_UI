@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { useEffect, useMemo, useRef } from "react"
 import { Link, useParams } from "react-router"
+import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
 const statusCopy: Record<GenerationStatus, string> = {
   idle: "Waiting for a prompt...",
@@ -193,8 +194,8 @@ export default function ProjectPage() {
           ) : null}
         </aside>
 
-        <div className="min-w-0 rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm text-slate-400">Generated screens</p>
               <h2 className="text-2xl font-semibold text-white">
@@ -207,63 +208,10 @@ export default function ProjectPage() {
             </Badge>
           </div>
 
-          {project.screens.length > 0 ? (
-            <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {project.screens.map((screen) => {
-                const generated = project.generatedScreens.find(
-                  (item) => item.id === screen.id,
-                )
-
-                return (
-                  <div
-                    key={screen.id}
-                    className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-semibold text-white">{screen.name}</h3>
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-400">
-                          {screen.purpose}
-                        </p>
-                      </div>
-                      {generated ? (
-                        <CheckCircle2 className="size-5 text-emerald-400" />
-                      ) : (
-                        <Loader2 className="size-5 animate-spin text-cyan-300" />
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : null}
-
-          <div className="mt-6 grid gap-5 xl:grid-cols-2">
-            {project.generatedScreens.map((screen) => (
-              <article
-                key={screen.id}
-                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900"
-              >
-                <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-                  <div>
-                    <h3 className="font-semibold text-white">{screen.name}</h3>
-                    <p className="text-xs text-slate-500">
-                      {screen.width} x {screen.height}
-                    </p>
-                  </div>
-                  <Badge>Completed</Badge>
-                </div>
-                <div className="h-[360px] bg-slate-950">
-                  <iframe
-                    srcDoc={screen.html}
-                    title={screen.name}
-                    sandbox="allow-scripts"
-                    className="h-full w-full border-0 bg-white"
-                  />
-                </div>
-              </article>
-            ))}
-          </div>
+          <ScreenFlowCanvas
+            screens={project.screens}
+            generatedScreens={project.generatedScreens}
+          />
         </div>
       </div>
     </section>
