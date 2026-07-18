@@ -1,8 +1,11 @@
 import os
 from functools import lru_cache
 from typing import Any
+from dotenv import load_dotenv
 
 from openai import AsyncOpenAI
+
+load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "cohere/north-mini-code:free"
@@ -41,11 +44,12 @@ class OpenRouterLLM:
         return content or ""
 
 
-@lru_cache
 def get_llm() -> OpenRouterLLM:
     api_key = os.getenv("OPENROUTER_API_KEY")
+    print(api_key)
 
     if not api_key:
+        print("ERROR: OPENROUTER_API_KEY is not configured. Please set the environment variable.")
         raise RuntimeError("OPENROUTER_API_KEY is not configured")
 
     return OpenRouterLLM(
