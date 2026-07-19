@@ -16,12 +16,12 @@ import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
 const statusCopy: Record<GenerationStatus, string> = {
   idle: "Waiting for a prompt...",
-  starting: "Starting generation...",
+  starting: "Starting your design...",
   planning: "Planning your application...",
-  designing: "Creating your design system...",
-  generating: "Generating screens...",
-  completed: "Generation completed.",
-  failed: "Generation failed.",
+  designing: "Creating a visual direction...",
+  generating: "Composing UI frames...",
+  completed: "Designs ready.",
+  failed: "Design failed.",
 }
 
 type StepState = "pending" | "active" | "complete" | "failed"
@@ -94,11 +94,11 @@ export default function ProjectPage() {
 
     return [
       {
-        label: "Generation started",
+        label: "Design started",
         state: getStepState(events, status, "generation_started", "project_planned"),
       },
       {
-        label: "Project planned",
+        label: "Product mapped",
         state: getStepState(
           events,
           status,
@@ -107,7 +107,7 @@ export default function ProjectPage() {
         ),
       },
       {
-        label: "Design system completed",
+        label: "Visual system ready",
         state: getStepState(
           events,
           status,
@@ -116,11 +116,11 @@ export default function ProjectPage() {
         ),
       },
       {
-        label: "Screens planned",
+        label: "Frames planned",
         state: getStepState(events, status, "screens_planned", "screen_completed"),
       },
       {
-        label: "Generating screens",
+        label: "Composing frames",
         state:
           project?.status === "generating"
             ? "active"
@@ -158,7 +158,7 @@ export default function ProjectPage() {
               <Sparkles className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Generation status</p>
+              <p className="text-sm text-slate-400">Design status</p>
               <h1 className="font-semibold text-white">{statusCopy[project.status]}</h1>
             </div>
           </div>
@@ -197,14 +197,14 @@ export default function ProjectPage() {
         <div className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-slate-400">Generated screens</p>
+              <p className="text-sm text-slate-400">UI frames</p>
               <h2 className="text-2xl font-semibold text-white">
                 {project.generatedScreens.length} of {project.screens.length || "..."} ready
               </h2>
             </div>
             <Badge className="gap-1">
               <Monitor className="size-3" />
-              Live stream
+              Design stream
             </Badge>
           </div>
 
