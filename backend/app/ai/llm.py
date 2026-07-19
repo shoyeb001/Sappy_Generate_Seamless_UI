@@ -1,10 +1,6 @@
-import os
 from typing import Any
-from dotenv import load_dotenv
 
 from openai import AsyncOpenAI
-
-load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 HUGGINGFACE_BASE_URL = "https://router.huggingface.co/v1"
@@ -44,11 +40,11 @@ class LLMClient:
 
         if not self.openrouter_client and not self.huggingface_client:
             raise RuntimeError(
-                "Configure OPENROUTER_API_KEY or HF_TOKEN/HUGGINGFACE_API_KEY"
+                "Add your OpenRouter API key and Hugging Face token in settings."
             )
         if not self.openrouter_client:
             raise RuntimeError(
-                "Configure OPENROUTER_API_KEY or HF_TOKEN/HUGGINGFACE_API_KEY"
+                "Add your OpenRouter API key in settings."
             )
 
     async def chat(
@@ -102,10 +98,16 @@ class LLMClient:
         raise RuntimeError("No LLM provider is configured")
 
 
-def get_llm() -> LLMClient:
+def get_llm(
+    *,
+    openrouter_api_key: str,
+    huggingface_token: str,
+    openrouter_model: str = DEFAULT_MODEL,
+    huggingface_model: str = DEFAULT_HUGGINGFACE_MODEL,
+) -> LLMClient:
     return LLMClient(
-        openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
-        openrouter_model=os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL),
-        huggingface_api_key=os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_KEY"),
-        huggingface_model=os.getenv("HUGGINGFACE_MODEL", DEFAULT_HUGGINGFACE_MODEL),
+        openrouter_api_key=openrouter_api_key,
+        openrouter_model=openrouter_model,
+        huggingface_api_key=huggingface_token,
+        huggingface_model=huggingface_model,
     )

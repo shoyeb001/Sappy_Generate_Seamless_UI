@@ -10,6 +10,7 @@ from app.ai.workflow import generation_graph
 from app.middleware.auth import get_current_user
 from app.schemas.auth import AuthUser
 from app.schemas.generation import CreateProjectRequest, CreateProjectResponse
+from app.services.settings_service import SettingsService, get_settings_service
 
 router = APIRouter(prefix="/projects", tags=["generation"])
 
@@ -22,11 +23,16 @@ def _sse_event(event_type: str, data: dict) -> str:
 async def create_project(
     request: CreateProjectRequest,
     current_user: AuthUser = Depends(get_current_user),
+    settings_service: SettingsService = Depends(get_settings_service),
 ) -> CreateProjectResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
     result = await generation_graph.ainvoke(
         {
             "prompt": request.prompt,
             "user_id": current_user.id,
+            "llm_credentials": llm_credentials.model_dump(),
             "errors": [],
         }
     )
@@ -47,6 +53,7 @@ async def _stream_generation_events(
     request: CreateProjectRequest,
     project_id: str,
     current_user: AuthUser,
+    llm_credentials: dict,
 ) -> AsyncIterator[str]:
     yield _sse_event(
         "generation_started",
@@ -63,6 +70,7 @@ async def _stream_generation_events(
             {
                 "prompt": request.prompt,
                 "user_id": current_user.id,
+                "llm_credentials": llm_credentials,
                 "errors": [],
             },
             stream_mode="updates",
@@ -129,10 +137,19 @@ async def _stream_generation_events(
 async def stream_project_generation(
     request: CreateProjectRequest,
     current_user: AuthUser = Depends(get_current_user),
+    settings_service: SettingsService = Depends(get_settings_service),
 ) -> StreamingResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
     project_id = str(uuid4())
     return StreamingResponse(
-        _stream_generation_events(request, project_id, current_user),
+        _stream_generation_events(
+            request,
+            project_id,
+            current_user,
+            llm_credentials.model_dump(),
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

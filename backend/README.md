@@ -15,17 +15,14 @@ uvicorn app.main:app --reload
 ## LLM Environment
 
 The backend tries OpenRouter first and automatically falls back to Hugging Face
-Inference Providers if OpenRouter fails or hits a rate limit.
+Inference Providers if OpenRouter fails or hits a rate limit. Provider API keys
+are supplied per user from the frontend settings page, not from environment
+variables.
 
 ```bash
-OPENROUTER_API_KEY=your_openrouter_key
 OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free
-
-HF_TOKEN=your_huggingface_token
 HUGGINGFACE_MODEL=openai/gpt-oss-120b:fastest
 ```
-
-You can also use `HUGGINGFACE_API_KEY` instead of `HF_TOKEN`.
 
 ## Auth and Database Environment
 
@@ -40,8 +37,14 @@ SUPABASE_DATABASE_URL=postgresql://postgres:password@host:5432/postgres
 # SUPABASE_URL is also accepted if you want to store the Postgres URL there.
 
 AUTH_JWT_SECRET=replace_with_a_long_random_secret
+AUTH_CREDENTIALS_SECRET=replace_with_another_long_random_secret
 AUTH_ACCESS_TOKEN_MINUTES=15
 AUTH_REFRESH_TOKEN_DAYS=30
+REDIS_URL=redis://localhost:6379/0
+LLM_CREDENTIALS_CACHE_TTL_SECONDS=3600
+
+OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free
+HUGGINGFACE_MODEL=openai/gpt-oss-120b:fastest
 ```
 
 On startup the backend creates:
@@ -49,7 +52,14 @@ On startup the backend creates:
 ```text
 auth_users
 auth_refresh_tokens
+user_llm_credentials
 ```
+
+Users add their own OpenRouter API key and Hugging Face token from the frontend
+settings page. Those provider credentials are encrypted before being stored and
+are decrypted only when the authenticated user starts a generation request.
+If `REDIS_URL` is configured, encrypted provider credentials are cached by user
+id before falling back to Postgres.
 
 ## Demo Health Check
 

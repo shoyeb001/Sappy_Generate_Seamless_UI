@@ -3,6 +3,7 @@ import { Footer } from "./components/commons/footer"
 import AuthPage from "./pages/auth/auth-page"
 import LandingPage from "./pages/home/landing-page"
 import ProjectPage from "./pages/project/project-page"
+import SettingsPage from "./pages/settings/settings-page"
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
@@ -14,6 +15,10 @@ const router = createBrowserRouter([
   {
     path: "/auth",
     element: <AuthPage />,
+  },
+  {
+    path: "/settings",
+    element: <SettingsPage />,
   },
   {
     path: "/project/:projectId",

@@ -29,6 +29,14 @@ CREATE TABLE IF NOT EXISTS auth_refresh_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_auth_refresh_tokens_user_id
     ON auth_refresh_tokens(user_id);
+
+CREATE TABLE IF NOT EXISTS user_llm_credentials (
+    user_id UUID PRIMARY KEY REFERENCES auth_users(id) ON DELETE CASCADE,
+    openrouter_api_key_encrypted TEXT NOT NULL,
+    huggingface_token_encrypted TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 """
 
 

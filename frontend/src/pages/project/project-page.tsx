@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { useStartGenerationStreamMutation } from "@/store/generation-api"
 import type { GeneratedScreen, GenerationStatus } from "@/store/generation-types"
+import { getLLMCredentialsStatus } from "@/store/settings-api"
 import { useAppSelector } from "@/store/store"
 import {
   CheckCircle2,
@@ -177,11 +178,33 @@ export default function ProjectPage() {
       return
     }
 
-    startedRef.current = true
-    void startGeneration({
-      projectId,
-      prompt: project.prompt,
+    const controller = new AbortController()
+
+    const startIfConfigured = async () => {
+      const credentialsStatus = await getLLMCredentialsStatus(controller.signal)
+      if (!credentialsStatus.is_complete) {
+        navigate(
+          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`,
+        )
+        return
+      }
+
+      startedRef.current = true
+      await startGeneration({
+        projectId,
+        prompt: project.prompt,
+      })
+    }
+
+    void startIfConfigured().catch(() => {
+      if (!controller.signal.aborted) {
+        navigate(
+          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`,
+        )
+      }
     })
+
+    return () => controller.abort()
   }, [navigate, project?.prompt, projectId, session, startGeneration])
 
   const steps = useMemo(() => {

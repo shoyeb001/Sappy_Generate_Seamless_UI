@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
+from cryptography.fernet import Fernet
 from fastapi import HTTPException, status
 
 from app.config.settings import get_settings
@@ -55,6 +56,20 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _fernet_key() -> bytes:
+    secret = get_settings().credentials_secret.encode("utf-8")
+    digest = hashlib.sha256(secret).digest()
+    return base64.urlsafe_b64encode(digest)
+
+
+def encrypt_secret(value: str) -> str:
+    return Fernet(_fernet_key()).encrypt(value.encode("utf-8")).decode("ascii")
+
+
+def decrypt_secret(value: str) -> str:
+    return Fernet(_fernet_key()).decrypt(value.encode("ascii")).decode("utf-8")
 
 
 def create_refresh_token() -> str:

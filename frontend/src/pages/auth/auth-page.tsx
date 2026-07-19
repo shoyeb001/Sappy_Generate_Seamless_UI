@@ -68,7 +68,7 @@ export default function AuthPage() {
         await signup(credentials).unwrap()
       }
 
-      navigate(nextPath)
+      navigate(mode === "signup" ? "/settings?required=1" : nextPath)
     } catch {
       // RTK Query exposes the error through mutation state for rendering.
     }

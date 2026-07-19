@@ -25,6 +25,9 @@ export const Navbar = () => {
                 <a href="/" className="text-white border-b-2 border-white pb-1">Explore</a>
                 <a href="#" className="hover:text-white transition-colors">Templates</a>
                 <a href="#" className="hover:text-white transition-colors">Docs</a>
+                {session ? (
+                    <a href="/settings" className="hover:text-white transition-colors">Settings</a>
+                ) : null}
             </div>
         </div>
         <div className="flex items-center gap-4">

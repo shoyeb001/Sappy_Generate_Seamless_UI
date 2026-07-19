@@ -7,6 +7,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from app.ai.llm import get_llm
+from app.config.settings import get_settings
 from app.ai.prompts import (
     CLASSIFY_PROMPT,
     GENERATE_COLORS_PROMPT,
@@ -30,6 +31,8 @@ from app.schemas.generation import (
 
 class GenerationState(TypedDict, total=False):
     prompt: str
+    user_id: str
+    llm_credentials: dict[str, str]
     classification: ScreenClassification
     project: ProjectPlan
     colors: ColorSystem
@@ -43,6 +46,7 @@ class GenerationState(TypedDict, total=False):
 
 class ScreenGenerationState(TypedDict):
     prompt: str
+    llm_credentials: dict[str, str]
     project: ProjectPlan
     design_system: DesignSystem
     screen: ScreenPlan
@@ -236,12 +240,20 @@ def _strip_markdown_fences(html: str) -> str:
 
 
 async def _call_json_node(
+    state: GenerationState | ScreenGenerationState,
     system_prompt: str,
     user_content: str,
     max_tokens: int = 900,
     temperature: float = 0.2,
 ) -> dict:
-    llm = get_llm()
+    settings = get_settings()
+    llm_credentials = state["llm_credentials"]
+    llm = get_llm(
+        openrouter_api_key=llm_credentials["openrouter_api_key"],
+        huggingface_token=llm_credentials["huggingface_token"],
+        openrouter_model=settings.openrouter_model,
+        huggingface_model=settings.huggingface_model,
+    )
     content = await llm.chat(
         [
             {"role": "system", "content": system_prompt},
@@ -257,7 +269,7 @@ async def classify_required_pages(state: GenerationState) -> GenerationState:
     prompt = state["prompt"]
 
     try:
-        payload = await _call_json_node(CLASSIFY_PROMPT, prompt, temperature=0.4)
+        payload = await _call_json_node(state, CLASSIFY_PROMPT, prompt, temperature=0.4)
         classification = ScreenClassification.model_validate(payload)
         return {"classification": classification}
     except Exception as exc:
@@ -271,7 +283,7 @@ async def plan_project(state: GenerationState) -> GenerationState:
     prompt = state["prompt"]
 
     try:
-        payload = await _call_json_node(PLAN_PROJECT_PROMPT, prompt, temperature=0.4)
+        payload = await _call_json_node(state, PLAN_PROJECT_PROMPT, prompt, temperature=0.4)
         project = ProjectPlan.model_validate(payload)
         return {"project": project}
     except Exception as exc:
@@ -293,7 +305,7 @@ async def generate_colors(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_COLORS_PROMPT, context, temperature=0.7)
+        payload = await _call_json_node(state, GENERATE_COLORS_PROMPT, context, temperature=0.7)
         colors = ColorSystem.model_validate(payload)
         return {"colors": colors}
     except Exception as exc:
@@ -315,7 +327,7 @@ async def generate_typography(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_TYPOGRAPHY_PROMPT, context, temperature=0.5)
+        payload = await _call_json_node(state, GENERATE_TYPOGRAPHY_PROMPT, context, temperature=0.5)
         typography = TypographySystem.model_validate(payload)
         return {"typography": typography}
     except Exception as exc:
@@ -337,7 +349,7 @@ async def generate_ui_style(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_UI_STYLE_PROMPT, context, temperature=0.7)
+        payload = await _call_json_node(state, GENERATE_UI_STYLE_PROMPT, context, temperature=0.7)
         ui_style = UIStyle.model_validate(payload)
         return {"ui_style": ui_style}
     except Exception as exc:
@@ -373,7 +385,7 @@ async def plan_screens(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(PLAN_SCREENS_PROMPT, context, temperature=0.4)
+        payload = await _call_json_node(state, PLAN_SCREENS_PROMPT, context, temperature=0.4)
         screens = [ScreenPlan.model_validate(screen) for screen in payload["screens"][:5]]
         if not screens:
             raise ValueError("Screen planner returned no screens")
@@ -407,7 +419,13 @@ async def generate_screen_html(state: ScreenGenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_SCREEN_HTML_PROMPT, context, max_tokens=15000, temperature=0.7)
+        payload = await _call_json_node(
+            state,
+            GENERATE_SCREEN_HTML_PROMPT,
+            context,
+            max_tokens=15000,
+            temperature=0.7,
+        )
         if "html" in payload:
             payload["html"] = _strip_markdown_fences(payload["html"])
         generated_screen = GeneratedScreen.model_validate(payload)
@@ -426,6 +444,7 @@ def dispatch_screen_generation(state: GenerationState) -> list[Send]:
             "generate_screen_html",
             {
                 "prompt": state["prompt"],
+                "llm_credentials": state["llm_credentials"],
                 "project": state["project"],
                 "design_system": state["design_system"],
                 "screen": screen,

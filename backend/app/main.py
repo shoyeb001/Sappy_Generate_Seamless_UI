@@ -5,13 +5,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
+from app.config.cache import close_cache, init_cache
 from app.config.database import close_database, init_database
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await init_database()
+    try:
+        await init_cache()
+    except Exception as exc:
+        print(f"Redis cache unavailable; continuing without credential cache: {exc}")
     yield
+    await close_cache()
     await close_database()
 
 
