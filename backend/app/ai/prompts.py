@@ -117,7 +117,7 @@ Return only valid JSON matching this schema:
 
 Requirements:
 - Generate a complete standalone HTML document.
-- Include Tailwind CSS via CDN using <script src="https://cdn.tailwindcss.com"></script>.
+- Include Tailwind CSS via CDN using <script src="https://cdn.tailwindcss.com"></script>. Add this before tailwind.config script if you define custom tokens.
 - Use the shared DesignSystem from the input for colors, typography, radius, spacing, shadows, and visual direction.
 - Define Tailwind theme tokens from the DesignSystem in a tailwind.config script.
 - Use realistic, domain-specific content. Do not use lorem ipsum.

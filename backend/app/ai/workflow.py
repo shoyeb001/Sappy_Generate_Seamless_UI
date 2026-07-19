@@ -139,7 +139,8 @@ def _fallback_generated_screen(screen: ScreenPlan, design_system: DesignSystem) 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{screen.name}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
   <script>
     tailwind.config = {{
       theme: {{
@@ -238,6 +239,7 @@ async def _call_json_node(
     system_prompt: str,
     user_content: str,
     max_tokens: int = 900,
+    temperature: float = 0.2,
 ) -> dict:
     llm = get_llm()
     content = await llm.chat(
@@ -245,7 +247,7 @@ async def _call_json_node(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content},
         ],
-        temperature=0.2,
+        temperature=temperature,
         max_tokens=max_tokens,
     )
     return _extract_json(content)
@@ -255,7 +257,7 @@ async def classify_required_pages(state: GenerationState) -> GenerationState:
     prompt = state["prompt"]
 
     try:
-        payload = await _call_json_node(CLASSIFY_PROMPT, prompt)
+        payload = await _call_json_node(CLASSIFY_PROMPT, prompt, temperature=0.4)
         classification = ScreenClassification.model_validate(payload)
         return {"classification": classification}
     except Exception as exc:
@@ -269,7 +271,7 @@ async def plan_project(state: GenerationState) -> GenerationState:
     prompt = state["prompt"]
 
     try:
-        payload = await _call_json_node(PLAN_PROJECT_PROMPT, prompt)
+        payload = await _call_json_node(PLAN_PROJECT_PROMPT, prompt, temperature=0.4)
         project = ProjectPlan.model_validate(payload)
         return {"project": project}
     except Exception as exc:
@@ -291,7 +293,7 @@ async def generate_colors(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_COLORS_PROMPT, context)
+        payload = await _call_json_node(GENERATE_COLORS_PROMPT, context, temperature=0.7)
         colors = ColorSystem.model_validate(payload)
         return {"colors": colors}
     except Exception as exc:
@@ -313,7 +315,7 @@ async def generate_typography(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_TYPOGRAPHY_PROMPT, context)
+        payload = await _call_json_node(GENERATE_TYPOGRAPHY_PROMPT, context, temperature=0.5)
         typography = TypographySystem.model_validate(payload)
         return {"typography": typography}
     except Exception as exc:
@@ -335,7 +337,7 @@ async def generate_ui_style(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_UI_STYLE_PROMPT, context)
+        payload = await _call_json_node(GENERATE_UI_STYLE_PROMPT, context, temperature=0.7)
         ui_style = UIStyle.model_validate(payload)
         return {"ui_style": ui_style}
     except Exception as exc:
@@ -371,7 +373,7 @@ async def plan_screens(state: GenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(PLAN_SCREENS_PROMPT, context)
+        payload = await _call_json_node(PLAN_SCREENS_PROMPT, context, temperature=0.4)
         screens = [ScreenPlan.model_validate(screen) for screen in payload["screens"][:5]]
         if not screens:
             raise ValueError("Screen planner returned no screens")
@@ -405,12 +407,13 @@ async def generate_screen_html(state: ScreenGenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_SCREEN_HTML_PROMPT, context, max_tokens=6000)
+        payload = await _call_json_node(GENERATE_SCREEN_HTML_PROMPT, context, max_tokens=8000, temperature=0.7)
         if "html" in payload:
             payload["html"] = _strip_markdown_fences(payload["html"])
         generated_screen = GeneratedScreen.model_validate(payload)
         return {"generated_screens": [generated_screen]}
     except Exception as exc:
+        print(f"Error generating screen HTML for {screen.id}: {exc}")
         return {
             "generated_screens": [_fallback_generated_screen(screen, design_system)],
             "errors": [f"generate_screen_html[{screen.id}]: {exc}"],

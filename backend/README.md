@@ -12,6 +12,21 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+## LLM Environment
+
+The backend tries OpenRouter first and automatically falls back to Hugging Face
+Inference Providers if OpenRouter fails or hits a rate limit.
+
+```bash
+OPENROUTER_API_KEY=your_openrouter_key
+OPENROUTER_MODEL=google/gemma-4-26b-a4b-it:free
+
+HF_TOKEN=your_huggingface_token
+HUGGINGFACE_MODEL=openai/gpt-oss-120b:fastest
+```
+
+You can also use `HUGGINGFACE_API_KEY` instead of `HF_TOKEN`.
+
 ## Demo Health Check
 
 ```bash

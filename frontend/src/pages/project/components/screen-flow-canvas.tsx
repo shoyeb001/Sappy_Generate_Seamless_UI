@@ -148,11 +148,15 @@ function getNodePosition(index: number) {
 type ScreenFlowCanvasProps = {
   screens: ScreenPlan[]
   generatedScreens: GeneratedScreen[]
+  selectedScreenId: string | null
+  onSelectScreen: (screenId: string | null) => void
 }
 
 export function ScreenFlowCanvas({
   screens,
   generatedScreens,
+  selectedScreenId,
+  onSelectScreen,
 }: ScreenFlowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ScreenFlowNode>([])
 
@@ -202,7 +206,10 @@ export function ScreenFlowCanvas({
         const current = currentById.get(node.id)
 
         if (!current) {
-          return node
+          return {
+            ...node,
+            selected: node.id === selectedScreenId,
+          }
         }
 
         return {
@@ -210,13 +217,13 @@ export function ScreenFlowCanvas({
           data: node.data,
           height: current.height ?? node.height,
           position: current.position,
-          selected: current.selected,
+          selected: current.id === selectedScreenId,
           type: node.type,
           width: current.width ?? node.width,
         }
       })
     })
-  }, [plannedNodes, setNodes])
+  }, [plannedNodes, selectedScreenId, setNodes])
 
   return (
     <div className="h-[calc(100vh-9rem)] min-h-[640px] overflow-hidden rounded-2xl border border-slate-800 bg-[#111318]">
@@ -225,6 +232,8 @@ export function ScreenFlowCanvas({
         edges={[]}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
+        onNodeClick={(_, node) => onSelectScreen(node.id)}
+        onPaneClick={() => onSelectScreen(null)}
         fitView
         fitViewOptions={{ padding: 0.18 }}
         minZoom={0.2}

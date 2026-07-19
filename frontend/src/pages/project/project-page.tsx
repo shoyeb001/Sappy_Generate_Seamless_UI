@@ -1,16 +1,20 @@
 import { Badge } from "@/components/ui/badge"
 import { useStartGenerationStreamMutation } from "@/store/generation-api"
-import type { GenerationStatus } from "@/store/generation-types"
+import type { GeneratedScreen, GenerationStatus } from "@/store/generation-types"
 import { useAppSelector } from "@/store/store"
 import {
   CheckCircle2,
   Circle,
+  Clipboard,
+  Download,
+  FileImage,
   Loader2,
   Monitor,
   Sparkles,
   XCircle,
 } from "lucide-react"
-import { useEffect, useMemo, useRef } from "react"
+import { toJpeg, toPng } from "html-to-image"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router"
 import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
@@ -67,10 +71,95 @@ function getStepState(
   return "pending"
 }
 
+function getExportFileName(screen: GeneratedScreen, format: "png" | "jpg") {
+  const slug = screen.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+
+  return `${slug || screen.id}.${format}`
+}
+
+function downloadDataUrl(dataUrl: string, fileName: string) {
+  const anchor = document.createElement("a")
+  anchor.href = dataUrl
+  anchor.download = fileName
+  anchor.click()
+}
+
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+function createExportFrame(screen: GeneratedScreen) {
+  const frame = document.createElement("iframe")
+
+  frame.style.position = "fixed"
+  frame.style.left = "-10000px"
+  frame.style.top = "0"
+  frame.style.width = `${screen.width}px`
+  frame.style.height = `${screen.height}px`
+  frame.style.overflow = "hidden"
+  frame.style.border = "0"
+  frame.setAttribute("aria-hidden", "true")
+
+  document.body.appendChild(frame)
+  frame.srcdoc = screen.html
+
+  return frame
+}
+
+function waitForExportFrame(
+  frame: HTMLIFrameElement,
+  screen: GeneratedScreen,
+  timeoutMs = 5000,
+) {
+  return new Promise<void>((resolve) => {
+    const markReady = () => {
+      const frameDocument = frame.contentDocument
+
+      if (frameDocument) {
+        frameDocument.documentElement.style.width = `${screen.width}px`
+        frameDocument.documentElement.style.minHeight = `${screen.height}px`
+        frameDocument.body.style.width = `${screen.width}px`
+        frameDocument.body.style.minHeight = `${screen.height}px`
+        frameDocument.body.style.margin = "0"
+      }
+
+      window.clearTimeout(timeoutId)
+      window.setTimeout(resolve, 800)
+    }
+
+    const timeoutId = window.setTimeout(markReady, timeoutMs)
+
+    if (frame.contentDocument?.readyState === "complete") {
+      markReady()
+      return
+    }
+
+    frame.addEventListener("load", markReady, { once: true })
+  })
+}
+
+function getExportRoot(frame: HTMLIFrameElement) {
+  const root = frame.contentDocument?.body
+
+  if (!root) {
+    throw new Error("Unable to prepare the selected frame for export.")
+  }
+
+  return root
+}
+
 export default function ProjectPage() {
   const { projectId } = useParams()
   const startedRef = useRef(false)
   const [startGeneration, streamState] = useStartGenerationStreamMutation()
+  const [selectedScreenId, setSelectedScreenId] = useState<string | null>(null)
+  const [exportStatus, setExportStatus] = useState<string | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const project = useAppSelector((state) =>
     projectId ? state.generation.projects[projectId] : undefined,
@@ -130,6 +219,93 @@ export default function ProjectPage() {
       },
     ] satisfies Array<{ label: string; state: StepState }>
   }, [project?.events, project?.status])
+
+  const selectedScreen = useMemo(() => {
+    return (
+      project?.generatedScreens.find((screen) => screen.id === selectedScreenId) ??
+      null
+    )
+  }, [project?.generatedScreens, selectedScreenId])
+
+  const handleSelectScreen = useCallback((screenId: string | null) => {
+    setSelectedScreenId(screenId)
+    setExportError(null)
+    setExportStatus(null)
+  }, [])
+
+  const handleCopyHtml = useCallback(async () => {
+    if (!selectedScreen) {
+      return
+    }
+
+    setExportError(null)
+
+    try {
+      await navigator.clipboard.writeText(selectedScreen.html)
+      setExportStatus("HTML copied")
+    } catch {
+      const textArea = document.createElement("textarea")
+      textArea.value = selectedScreen.html
+      textArea.style.position = "fixed"
+      textArea.style.left = "-9999px"
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      document.execCommand("copy")
+      textArea.remove()
+      setExportStatus("HTML copied")
+    }
+  }, [selectedScreen])
+
+  const handleExportImage = useCallback(
+    async (format: "png" | "jpg") => {
+      if (!selectedScreen) {
+        return
+      }
+
+      setExportError(null)
+      setExportStatus(`Exporting ${format.toUpperCase()}...`)
+
+      const frame = createExportFrame(selectedScreen)
+
+      try {
+        await waitForExportFrame(frame, selectedScreen)
+        await wait(1200)
+        const root = getExportRoot(frame)
+
+        const options = {
+          backgroundColor: "#ffffff",
+          cacheBust: true,
+          canvasHeight: selectedScreen.height,
+          canvasWidth: selectedScreen.width,
+          height: selectedScreen.height,
+          pixelRatio: 1,
+          width: selectedScreen.width,
+        }
+
+        const dataUrl =
+          format === "png"
+            ? await toPng(root, options)
+            : await toJpeg(root, {
+                ...options,
+                quality: 0.95,
+              })
+
+        downloadDataUrl(dataUrl, getExportFileName(selectedScreen, format))
+        setExportStatus(`${format.toUpperCase()} exported`)
+      } catch (error) {
+        setExportError(
+          error instanceof Error
+            ? error.message
+            : "Unable to export the selected frame.",
+        )
+        setExportStatus(null)
+      } finally {
+        frame.remove()
+      }
+    },
+    [selectedScreen],
+  )
 
   if (!projectId || !project) {
     return (
@@ -192,6 +368,58 @@ export default function ProjectPage() {
               {project.error ?? "Unable to connect to the generation stream."}
             </div>
           ) : null}
+
+          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+            <p className="text-xs uppercase tracking-widest text-slate-500">
+              Selected frame
+            </p>
+            {selectedScreen ? (
+              <>
+                <h2 className="mt-2 truncate text-lg font-semibold text-white">
+                  {selectedScreen.name}
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">
+                  {selectedScreen.width} x {selectedScreen.height}
+                </p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyHtml}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                  >
+                    <Clipboard className="size-3.5" />
+                    HTML
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleExportImage("png")}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                  >
+                    <FileImage className="size-3.5" />
+                    PNG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleExportImage("jpg")}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                  >
+                    <Download className="size-3.5" />
+                    JPG
+                  </button>
+                </div>
+                {exportStatus ? (
+                  <p className="mt-3 text-sm text-emerald-300">{exportStatus}</p>
+                ) : null}
+                {exportError ? (
+                  <p className="mt-3 text-sm text-red-300">{exportError}</p>
+                ) : null}
+              </>
+            ) : (
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                Select a completed frame on the canvas to copy or export it.
+              </p>
+            )}
+          </div>
         </aside>
 
         <div className="min-w-0">
@@ -211,6 +439,8 @@ export default function ProjectPage() {
           <ScreenFlowCanvas
             screens={project.screens}
             generatedScreens={project.generatedScreens}
+            selectedScreenId={selectedScreenId}
+            onSelectScreen={handleSelectScreen}
           />
         </div>
       </div>
