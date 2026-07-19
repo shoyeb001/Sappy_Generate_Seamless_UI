@@ -280,6 +280,7 @@ export default function ProjectPage() {
           canvasWidth: selectedScreen.width,
           height: selectedScreen.height,
           pixelRatio: 1,
+          skipFonts: true,
           width: selectedScreen.width,
         }
 
