@@ -1,5 +1,6 @@
 import { Navbar } from "./components/commons/Navbar"
 import { Footer } from "./components/commons/footer"
+import AuthPage from "./pages/auth/auth-page"
 import LandingPage from "./pages/home/landing-page"
 import ProjectPage from "./pages/project/project-page"
 import { createBrowserRouter } from "react-router";
@@ -9,6 +10,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+  },
+  {
+    path: "/auth",
+    element: <AuthPage />,
   },
   {
     path: "/project/:projectId",

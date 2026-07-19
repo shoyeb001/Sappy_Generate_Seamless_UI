@@ -27,6 +27,30 @@ HUGGINGFACE_MODEL=openai/gpt-oss-120b:fastest
 
 You can also use `HUGGINGFACE_API_KEY` instead of `HF_TOKEN`.
 
+## Auth and Database Environment
+
+Authentication is handled by this FastAPI backend. Supabase is used only as
+Postgres storage, so provide a Supabase Postgres connection string rather than
+Supabase Auth API keys.
+
+```bash
+DATABASE_URL=postgresql://postgres:password@host:5432/postgres
+# or
+SUPABASE_DATABASE_URL=postgresql://postgres:password@host:5432/postgres
+# SUPABASE_URL is also accepted if you want to store the Postgres URL there.
+
+AUTH_JWT_SECRET=replace_with_a_long_random_secret
+AUTH_ACCESS_TOKEN_MINUTES=15
+AUTH_REFRESH_TOKEN_DAYS=30
+```
+
+On startup the backend creates:
+
+```text
+auth_users
+auth_refresh_tokens
+```
+
 ## Demo Health Check
 
 ```bash

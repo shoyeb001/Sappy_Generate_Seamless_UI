@@ -2,16 +2,20 @@ import { configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from "@reduxjs/toolkit/query"
 import { useDispatch, useSelector, type TypedUseSelectorHook } from "react-redux"
 
+import { authApi } from "./auth-api"
+import { authReducer } from "./auth-slice"
 import { generationApi } from "./generation-api"
 import { generationReducer } from "./generation-slice"
 
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     generation: generationReducer,
+    [authApi.reducerPath]: authApi.reducer,
     [generationApi.reducerPath]: generationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(generationApi.middleware),
+    getDefaultMiddleware().concat(authApi.middleware, generationApi.middleware),
 })
 
 setupListeners(store.dispatch)

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { startProject } from "@/store/generation-slice";
-import { useAppDispatch } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/store/store";
 import { Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
@@ -18,12 +18,18 @@ export const HeroSection = () => {
   const [prompt, setPrompt] = useState("")
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const session = useAppSelector((state) => state.auth.session)
 
   const submitPrompt = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const trimmedPrompt = prompt.trim()
     if (!trimmedPrompt) {
+      return
+    }
+
+    if (!session) {
+      navigate("/auth?next=/")
       return
     }
 

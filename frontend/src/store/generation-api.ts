@@ -1,11 +1,8 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react"
 
 import { generationEventReceived } from "./generation-slice"
+import { API_BASE_URL, getValidAccessToken } from "./auth-token"
 import type { GenerationEvent, GenerationEventType } from "./generation-types"
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:8000"
 
 type StartGenerationArgs = {
   projectId: string
@@ -51,9 +48,11 @@ export const generationApi = createApi({
     >({
       queryFn: async ({ projectId, prompt }, api) => {
         try {
+          const accessToken = await getValidAccessToken(api.signal)
           const response = await fetch(`${API_BASE_URL}/api/v1/projects/stream`, {
             method: "POST",
             headers: {
+              Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ prompt }),

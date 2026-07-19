@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { toJpeg, toPng } from "html-to-image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Link, useParams } from "react-router"
+import { Link, useNavigate, useParams } from "react-router"
 import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
 const statusCopy: Record<GenerationStatus, string> = {
@@ -155,6 +155,7 @@ function getExportRoot(frame: HTMLIFrameElement) {
 
 export default function ProjectPage() {
   const { projectId } = useParams()
+  const navigate = useNavigate()
   const startedRef = useRef(false)
   const [startGeneration, streamState] = useStartGenerationStreamMutation()
   const [selectedScreenId, setSelectedScreenId] = useState<string | null>(null)
@@ -164,8 +165,14 @@ export default function ProjectPage() {
   const project = useAppSelector((state) =>
     projectId ? state.generation.projects[projectId] : undefined,
   )
+  const session = useAppSelector((state) => state.auth.session)
 
   useEffect(() => {
+    if (!session) {
+      navigate(`/auth?next=${encodeURIComponent(projectId ? `/project/${projectId}` : "/")}`)
+      return
+    }
+
     if (!projectId || !project?.prompt || startedRef.current) {
       return
     }
@@ -175,7 +182,7 @@ export default function ProjectPage() {
       projectId,
       prompt: project.prompt,
     })
-  }, [project?.prompt, projectId, startGeneration])
+  }, [navigate, project?.prompt, projectId, session, startGeneration])
 
   const steps = useMemo(() => {
     const events = project?.events ?? []

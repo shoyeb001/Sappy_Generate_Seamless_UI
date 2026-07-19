@@ -2,11 +2,13 @@ import json
 from collections.abc import AsyncIterator
 from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 
 from app.ai.workflow import generation_graph
+from app.middleware.auth import get_current_user
+from app.schemas.auth import AuthUser
 from app.schemas.generation import CreateProjectRequest, CreateProjectResponse
 
 router = APIRouter(prefix="/projects", tags=["generation"])
@@ -17,10 +19,14 @@ def _sse_event(event_type: str, data: dict) -> str:
 
 
 @router.post("", response_model=CreateProjectResponse)
-async def create_project(request: CreateProjectRequest) -> CreateProjectResponse:
+async def create_project(
+    request: CreateProjectRequest,
+    current_user: AuthUser = Depends(get_current_user),
+) -> CreateProjectResponse:
     result = await generation_graph.ainvoke(
         {
             "prompt": request.prompt,
+            "user_id": current_user.id,
             "errors": [],
         }
     )
@@ -40,6 +46,7 @@ async def create_project(request: CreateProjectRequest) -> CreateProjectResponse
 async def _stream_generation_events(
     request: CreateProjectRequest,
     project_id: str,
+    current_user: AuthUser,
 ) -> AsyncIterator[str]:
     yield _sse_event(
         "generation_started",
@@ -55,6 +62,7 @@ async def _stream_generation_events(
         async for update in generation_graph.astream(
             {
                 "prompt": request.prompt,
+                "user_id": current_user.id,
                 "errors": [],
             },
             stream_mode="updates",
@@ -118,10 +126,13 @@ async def _stream_generation_events(
 
 
 @router.post("/stream")
-async def stream_project_generation(request: CreateProjectRequest) -> StreamingResponse:
+async def stream_project_generation(
+    request: CreateProjectRequest,
+    current_user: AuthUser = Depends(get_current_user),
+) -> StreamingResponse:
     project_id = str(uuid4())
     return StreamingResponse(
-        _stream_generation_events(request, project_id),
+        _stream_generation_events(request, project_id, current_user),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
