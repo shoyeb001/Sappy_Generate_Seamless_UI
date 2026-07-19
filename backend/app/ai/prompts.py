@@ -389,6 +389,8 @@ Do not generate React, JSX, TypeScript, or Vue.
 
 Do not include markdown code fences.
 
+Do not use escaped quotes like \" instead of normal quotes "
+
 Do not include explanations outside the JSON.
 
 Do not include comments explaining your reasoning.
