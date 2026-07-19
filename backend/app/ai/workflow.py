@@ -407,7 +407,7 @@ async def generate_screen_html(state: ScreenGenerationState) -> GenerationState:
     )
 
     try:
-        payload = await _call_json_node(GENERATE_SCREEN_HTML_PROMPT, context, max_tokens=8000, temperature=0.7)
+        payload = await _call_json_node(GENERATE_SCREEN_HTML_PROMPT, context, max_tokens=15000, temperature=0.7)
         if "html" in payload:
             payload["html"] = _strip_markdown_fences(payload["html"])
         generated_screen = GeneratedScreen.model_validate(payload)

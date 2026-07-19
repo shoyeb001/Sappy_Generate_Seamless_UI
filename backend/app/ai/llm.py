@@ -33,19 +33,19 @@ class LLMClient:
             if openrouter_api_key
             else None
         )
-        # self.huggingface_client = (
-        #     AsyncOpenAI(
-        #         api_key=huggingface_api_key,
-        #         base_url=HUGGINGFACE_BASE_URL,
-        #     )
-        #     if huggingface_api_key
-        #     else None
-        # )
+        self.huggingface_client = (
+            AsyncOpenAI(
+                api_key=huggingface_api_key,
+                base_url=HUGGINGFACE_BASE_URL,
+            )
+            if huggingface_api_key
+            else None
+        )
 
-        # if not self.openrouter_client and not self.huggingface_client:
-        #     raise RuntimeError(
-        #         "Configure OPENROUTER_API_KEY or HF_TOKEN/HUGGINGFACE_API_KEY"
-        #     )
+        if not self.openrouter_client and not self.huggingface_client:
+            raise RuntimeError(
+                "Configure OPENROUTER_API_KEY or HF_TOKEN/HUGGINGFACE_API_KEY"
+            )
         if not self.openrouter_client:
             raise RuntimeError(
                 "Configure OPENROUTER_API_KEY or HF_TOKEN/HUGGINGFACE_API_KEY"
@@ -76,23 +76,23 @@ class LLMClient:
                 last_error = exc
                 print(f"OpenRouter call failed; trying Hugging Face fallback: {exc}")
 
-        # if self.huggingface_client:
-        #     try:
-        #         response = await self.huggingface_client.chat.completions.create(
-        #             model=self.huggingface_model,
-        #             messages=messages,
-        #             temperature=temperature,
-        #             max_tokens=max_tokens,
-        #             **kwargs,
-        #         )
-        #         content = response.choices[0].message.content
-        #         return content or ""
-        #     except Exception as exc:
-        #         if last_error:
-        #             raise RuntimeError(
-        #                 f"OpenRouter failed: {last_error}; Hugging Face failed: {exc}"
-        #             ) from exc
-        #         raise
+        if self.huggingface_client:
+            try:
+                response = await self.huggingface_client.chat.completions.create(
+                    model=self.huggingface_model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs,
+                )
+                content = response.choices[0].message.content
+                return content or ""
+            except Exception as exc:
+                if last_error:
+                    raise RuntimeError(
+                        f"OpenRouter failed: {last_error}; Hugging Face failed: {exc}"
+                    ) from exc
+                raise
 
         if last_error:
             raise RuntimeError(
