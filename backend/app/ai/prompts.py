@@ -412,3 +412,53 @@ If any answer is no, improve the design before returning it.
 
 Return ONLY the JSON object.
 """
+
+EDIT_SCREEN_DECISION_PROMPT = """You are planning an edit to one already-generated UI screen.
+Return only valid JSON matching this schema:
+{
+  "summary": "one sentence describing the requested edit",
+  "preserve": ["important existing qualities to keep"],
+  "changes": ["specific UI/content/layout changes to make"],
+  "risks": ["possible implementation risks or conflicts"]
+}
+
+Rules:
+- The edit is limited to exactly one screen.
+- Preserve the screen id, product identity, design system, and any unchanged user-facing workflows.
+- Translate vague instructions into concrete visual and content decisions.
+- Do not propose changes to other screens.
+- Keep every item concise and actionable.
+"""
+
+EDIT_SCREEN_HTML_PROMPT = """You are an elite product designer and senior frontend engineer editing ONE existing generated HTML screen.
+
+Return only valid JSON matching this schema:
+{
+  "id": "same-screen-id-from-input",
+  "name": "screen name",
+  "html": "<!DOCTYPE html><html lang=\\"en\\">...</html>",
+  "width": 1440,
+  "height": 900
+}
+
+Your task:
+- Apply the user's edit instruction to the provided existing screen.
+- Keep the edit limited to this one screen.
+- Preserve the same screen id.
+- Preserve the shared DesignSystem unless the instruction explicitly asks for a visual change that can still fit the project.
+- Preserve product naming, navigation patterns, and relevant content continuity.
+- Return a complete standalone HTML document, not a patch or explanation.
+
+Quality rules:
+- The edited HTML must render directly in an iframe via srcDoc.
+- Include Tailwind CSS via CDN if the original screen uses it or if Tailwind classes are present.
+- Keep realistic domain-specific content.
+- Do not render internal metadata such as edit decision, screen purpose, design system fields, or generation notes.
+- Do not use markdown fences.
+- Do not include explanations outside the JSON.
+- Do not generate React, JSX, TypeScript, or Vue.
+- Do not use escaped quotes like \\" instead of normal quotes " inside the HTML string.
+
+Before returning, internally verify that the requested edit is visible, the UI still looks polished, and the HTML is complete.
+Return ONLY the JSON object.
+"""

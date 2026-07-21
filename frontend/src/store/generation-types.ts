@@ -70,6 +70,18 @@ export type GenerationEventType =
   | "screen_completed"
   | "generation_completed"
   | "generation_failed"
+  | "screen_edit_started"
+  | "screen_edit_decision_completed"
+  | "screen_edit_completed"
+  | "screen_edit_stream_completed"
+  | "screen_edit_failed"
+
+export type ScreenEditDecision = {
+  summary: string
+  preserve: string[]
+  changes: string[]
+  risks: string[]
+}
 
 export type GenerationEvent =
   | {
@@ -114,6 +126,44 @@ export type GenerationEvent =
       type: "generation_failed"
       data: {
         project_id?: string
+        message: string
+      }
+    }
+  | {
+      type: "screen_edit_started"
+      data: {
+        edit_id: string
+        screen_id: string
+        instruction: string
+      }
+    }
+  | {
+      type: "screen_edit_decision_completed"
+      data: {
+        edit_id: string
+        screen_id: string
+        decision: ScreenEditDecision
+      }
+    }
+  | {
+      type: "screen_edit_completed"
+      data: {
+        edit_id: string
+        screen: GeneratedScreen
+      }
+    }
+  | {
+      type: "screen_edit_stream_completed"
+      data: {
+        edit_id: string
+        screen_id: string
+      }
+    }
+  | {
+      type: "screen_edit_failed"
+      data: {
+        edit_id?: string
+        screen_id?: string
         message: string
       }
     }

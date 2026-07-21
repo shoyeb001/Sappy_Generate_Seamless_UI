@@ -7,8 +7,17 @@ import type {
   GenerationEventType,
   GenerationStatus,
   ProjectPlan,
+  ScreenEditDecision,
   ScreenPlan,
 } from "./generation-types"
+
+type ScreenEditState = {
+  status: "idle" | "understanding" | "regenerating" | "completed" | "failed"
+  screenId: string | null
+  instruction: string
+  decision: ScreenEditDecision | null
+  error: string | null
+}
 
 export type ProjectGenerationState = {
   id: string
@@ -21,6 +30,7 @@ export type ProjectGenerationState = {
   generatedScreens: GeneratedScreen[]
   error: string | null
   events: GenerationEventType[]
+  edit: ScreenEditState
 }
 
 type GenerationState = {
@@ -43,6 +53,15 @@ function ensureProject(
     if (prompt && !existing.prompt) {
       existing.prompt = prompt
     }
+    if (!existing.edit) {
+      existing.edit = {
+        status: "idle",
+        screenId: null,
+        instruction: "",
+        decision: null,
+        error: null,
+      }
+    }
     return existing
   }
 
@@ -56,6 +75,13 @@ function ensureProject(
     generatedScreens: [],
     error: null,
     events: [],
+    edit: {
+      status: "idle",
+      screenId: null,
+      instruction: "",
+      decision: null,
+      error: null,
+    },
   }
   state.projects[projectId] = project
   return project
@@ -85,6 +111,13 @@ const generationSlice = createSlice({
       project.designSystem = null
       project.screens = []
       project.generatedScreens = []
+      project.edit = {
+        status: "idle",
+        screenId: null,
+        instruction: "",
+        decision: null,
+        error: null,
+      }
       state.activeProjectId = action.payload.projectId
     },
     generationEventReceived: (
@@ -138,6 +171,47 @@ const generationSlice = createSlice({
           project.status = "failed"
           project.backendProjectId = event.data.project_id
           project.error = event.data.message
+          break
+        case "screen_edit_started":
+          project.edit = {
+            status: "understanding",
+            screenId: event.data.screen_id,
+            instruction: event.data.instruction,
+            decision: null,
+            error: null,
+          }
+          break
+        case "screen_edit_decision_completed":
+          project.edit.status = "regenerating"
+          project.edit.screenId = event.data.screen_id
+          project.edit.decision = event.data.decision
+          project.edit.error = null
+          break
+        case "screen_edit_completed": {
+          project.edit.status = "completed"
+          project.edit.screenId = event.data.screen.id
+          project.edit.error = null
+          const screen = event.data.screen
+          const existingIndex = project.generatedScreens.findIndex(
+            (item) => item.id === screen.id,
+          )
+          if (existingIndex >= 0) {
+            project.generatedScreens[existingIndex] = screen
+          } else {
+            project.generatedScreens.push(screen)
+          }
+          break
+        }
+        case "screen_edit_stream_completed":
+          if (project.edit.status !== "failed") {
+            project.edit.status = "completed"
+            project.edit.screenId = event.data.screen_id
+          }
+          break
+        case "screen_edit_failed":
+          project.edit.status = "failed"
+          project.edit.screenId = event.data.screen_id ?? project.edit.screenId
+          project.edit.error = event.data.message
           break
       }
     },

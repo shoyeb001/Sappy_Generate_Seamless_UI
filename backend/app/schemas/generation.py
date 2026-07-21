@@ -68,6 +68,22 @@ class GeneratedScreen(BaseModel):
     height: int = Field(..., gt=0)
 
 
+class EditScreenRequest(BaseModel):
+    instruction: str = Field(..., min_length=3, description="Requested change for one screen.")
+    original_prompt: str = Field(..., min_length=3)
+    project: ProjectPlan | None = None
+    design_system: DesignSystem | None = None
+    screen_plan: ScreenPlan | None = None
+    screen: GeneratedScreen
+
+
+class ScreenEditDecision(BaseModel):
+    summary: str
+    preserve: list[str] = Field(default_factory=list)
+    changes: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+
+
 class CreateProjectResponse(BaseModel):
     project_id: str
     status: Literal["planned", "generated"]

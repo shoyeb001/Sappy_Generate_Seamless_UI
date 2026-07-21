@@ -1,5 +1,8 @@
 import { Badge } from "@/components/ui/badge"
-import { useStartGenerationStreamMutation } from "@/store/generation-api"
+import {
+  useStartGenerationStreamMutation,
+  useStartScreenEditStreamMutation,
+} from "@/store/generation-api"
 import type { GeneratedScreen, GenerationStatus } from "@/store/generation-types"
 import { getLLMCredentialsStatus } from "@/store/settings-api"
 import { useAppSelector } from "@/store/store"
@@ -12,6 +15,8 @@ import {
   Loader2,
   Monitor,
   Sparkles,
+  WandSparkles,
+  X,
   XCircle,
 } from "lucide-react"
 import { toJpeg, toPng } from "html-to-image"
@@ -159,7 +164,9 @@ export default function ProjectPage() {
   const navigate = useNavigate()
   const startedRef = useRef(false)
   const [startGeneration, streamState] = useStartGenerationStreamMutation()
+  const [startScreenEdit, editStreamState] = useStartScreenEditStreamMutation()
   const [selectedScreenId, setSelectedScreenId] = useState<string | null>(null)
+  const [editInstruction, setEditInstruction] = useState("")
   const [exportStatus, setExportStatus] = useState<string | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
@@ -257,11 +264,44 @@ export default function ProjectPage() {
     )
   }, [project?.generatedScreens, selectedScreenId])
 
+  const selectedScreenPlan = useMemo(() => {
+    return project?.screens.find((screen) => screen.id === selectedScreenId) ?? null
+  }, [project?.screens, selectedScreenId])
+
   const handleSelectScreen = useCallback((screenId: string | null) => {
     setSelectedScreenId(screenId)
     setExportError(null)
     setExportStatus(null)
   }, [])
+
+  const handleClearSelectedScreen = useCallback(() => {
+    setSelectedScreenId(null)
+    setExportError(null)
+    setExportStatus(null)
+  }, [])
+
+  const handleEditSelectedScreen = useCallback(async () => {
+    if (!projectId || !project || !selectedScreen || !editInstruction.trim()) {
+      return
+    }
+
+    await startScreenEdit({
+      projectId,
+      instruction: editInstruction.trim(),
+      originalPrompt: project.prompt,
+      project: project.project,
+      designSystem: project.designSystem,
+      screenPlan: selectedScreenPlan,
+      screen: selectedScreen,
+    })
+  }, [
+    editInstruction,
+    project,
+    projectId,
+    selectedScreen,
+    selectedScreenPlan,
+    startScreenEdit,
+  ])
 
   const handleCopyHtml = useCallback(async () => {
     if (!selectedScreen) {
@@ -399,6 +439,91 @@ export default function ProjectPage() {
               {project.error ?? "Unable to connect to the generation stream."}
             </div>
           ) : null}
+
+          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-widest text-slate-500">
+                Edit frame
+              </p>
+              {project.edit.status === "understanding" ||
+              project.edit.status === "regenerating" ? (
+                <Loader2 className="size-4 animate-spin text-cyan-300" />
+              ) : null}
+            </div>
+
+            <div className="mt-3 min-h-8">
+              {selectedScreen ? (
+                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-xs font-medium text-cyan-100">
+                  <span className="truncate">{selectedScreen.name}</span>
+                  <button
+                    type="button"
+                    onClick={handleClearSelectedScreen}
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-cyan-100 transition hover:bg-cyan-300/20"
+                    aria-label="Remove selected frame"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ) : (
+                <p className="text-sm leading-6 text-slate-400">
+                  Select one completed frame to edit it.
+                </p>
+              )}
+            </div>
+
+            <textarea
+              value={editInstruction}
+              onChange={(event) => setEditInstruction(event.target.value)}
+              placeholder="Describe the change for the selected frame..."
+              className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm leading-6 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
+            />
+
+            <button
+              type="button"
+              onClick={() => void handleEditSelectedScreen()}
+              disabled={
+                !selectedScreen ||
+                !editInstruction.trim() ||
+                project.edit.status === "understanding" ||
+                project.edit.status === "regenerating" ||
+                editStreamState.isLoading
+              }
+              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {project.edit.status === "understanding" ||
+              project.edit.status === "regenerating" ||
+              editStreamState.isLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <WandSparkles className="size-4" />
+              )}
+              Apply edit
+            </button>
+
+            {project.edit.status !== "idle" ? (
+              <p className="mt-3 text-sm text-slate-400">
+                {project.edit.status === "understanding"
+                  ? "Understanding the edit..."
+                  : project.edit.status === "regenerating"
+                    ? "Regenerating the selected frame..."
+                    : project.edit.status === "completed"
+                      ? "Selected frame updated."
+                      : "Edit failed."}
+              </p>
+            ) : null}
+
+            {project.edit.decision ? (
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {project.edit.decision.summary}
+              </p>
+            ) : null}
+
+            {project.edit.error || editStreamState.error ? (
+              <p className="mt-3 text-sm text-red-300">
+                {project.edit.error ?? "Unable to connect to the edit stream."}
+              </p>
+            ) : null}
+          </div>
 
           <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
             <p className="text-xs uppercase tracking-widest text-slate-500">

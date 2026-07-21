@@ -10,6 +10,8 @@ from app.ai.llm import get_llm
 from app.config.settings import get_settings
 from app.ai.prompts import (
     CLASSIFY_PROMPT,
+    EDIT_SCREEN_DECISION_PROMPT,
+    EDIT_SCREEN_HTML_PROMPT,
     GENERATE_COLORS_PROMPT,
     GENERATE_SCREEN_HTML_PROMPT,
     GENERATE_TYPOGRAPHY_PROMPT,
@@ -23,6 +25,7 @@ from app.schemas.generation import (
     GeneratedScreen,
     ProjectPlan,
     ScreenClassification,
+    ScreenEditDecision,
     ScreenPlan,
     TypographySystem,
     UIStyle,
@@ -50,6 +53,20 @@ class ScreenGenerationState(TypedDict):
     project: ProjectPlan
     design_system: DesignSystem
     screen: ScreenPlan
+
+
+class ScreenEditState(TypedDict, total=False):
+    instruction: str
+    original_prompt: str
+    user_id: str
+    llm_credentials: dict[str, str]
+    project: ProjectPlan | None
+    design_system: DesignSystem | None
+    screen_plan: ScreenPlan | None
+    screen: GeneratedScreen
+    edit_decision: ScreenEditDecision
+    edited_screen: GeneratedScreen
+    errors: Annotated[list[str], add]
 
 
 def _fallback_classification(prompt: str) -> ScreenClassification:
@@ -223,6 +240,15 @@ def _fallback_generated_screen(screen: ScreenPlan, design_system: DesignSystem) 
     )
 
 
+def _fallback_edit_decision(instruction: str) -> ScreenEditDecision:
+    return ScreenEditDecision(
+        summary=f"Apply the requested update: {instruction[:160]}",
+        preserve=["Keep the existing screen id and project identity."],
+        changes=[instruction],
+        risks=["The LLM edit planner failed, so the raw instruction is used directly."],
+    )
+
+
 def _extract_json(text: str) -> dict:
     match = re.search(r"\{.*\}", text, flags=re.DOTALL)
     if not match:
@@ -240,7 +266,7 @@ def _strip_markdown_fences(html: str) -> str:
 
 
 async def _call_json_node(
-    state: GenerationState | ScreenGenerationState,
+    state: GenerationState | ScreenGenerationState | ScreenEditState,
     system_prompt: str,
     user_content: str,
     max_tokens: int = 900,
@@ -438,6 +464,90 @@ async def generate_screen_html(state: ScreenGenerationState) -> GenerationState:
         }
 
 
+async def analyze_edit_instruction(state: ScreenEditState) -> ScreenEditState:
+    context = json.dumps(
+        {
+            "instruction": state["instruction"],
+            "original_prompt": state["original_prompt"],
+            "project": state.get("project").model_dump() if state.get("project") else None,
+            "design_system": state.get("design_system").model_dump()
+            if state.get("design_system")
+            else None,
+            "screen_plan": state.get("screen_plan").model_dump()
+            if state.get("screen_plan")
+            else None,
+            "screen": {
+                "id": state["screen"].id,
+                "name": state["screen"].name,
+                "width": state["screen"].width,
+                "height": state["screen"].height,
+            },
+        },
+        indent=2,
+    )
+
+    try:
+        payload = await _call_json_node(
+            state,
+            EDIT_SCREEN_DECISION_PROMPT,
+            context,
+            max_tokens=900,
+            temperature=0.3,
+        )
+        return {"edit_decision": ScreenEditDecision.model_validate(payload)}
+    except Exception as exc:
+        return {
+            "edit_decision": _fallback_edit_decision(state["instruction"]),
+            "errors": [f"analyze_edit_instruction[{state['screen'].id}]: {exc}"],
+        }
+
+
+async def regenerate_edited_screen(state: ScreenEditState) -> ScreenEditState:
+    screen = state["screen"]
+    context = json.dumps(
+        {
+            "instruction": state["instruction"],
+            "edit_decision": state["edit_decision"].model_dump(),
+            "original_prompt": state["original_prompt"],
+            "project": state.get("project").model_dump() if state.get("project") else None,
+            "design_system": state.get("design_system").model_dump()
+            if state.get("design_system")
+            else None,
+            "screen_plan": state.get("screen_plan").model_dump()
+            if state.get("screen_plan")
+            else None,
+            "existing_screen": screen.model_dump(),
+            "required_output": {
+                "id": screen.id,
+                "width": screen.width,
+                "height": screen.height,
+            },
+        },
+        indent=2,
+    )
+
+    try:
+        payload = await _call_json_node(
+            state,
+            EDIT_SCREEN_HTML_PROMPT,
+            context,
+            max_tokens=15000,
+            temperature=0.55,
+        )
+        if "html" in payload:
+            payload["html"] = _strip_markdown_fences(payload["html"])
+        payload["id"] = screen.id
+        payload.setdefault("name", screen.name)
+        payload.setdefault("width", screen.width)
+        payload.setdefault("height", screen.height)
+        return {"edited_screen": GeneratedScreen.model_validate(payload)}
+    except Exception as exc:
+        return {
+            "edited_screen": screen,
+            "errors": [f"regenerate_edited_screen[{screen.id}]: {exc}"],
+        }
+
+
 def dispatch_screen_generation(state: GenerationState) -> list[Send]:
     return [
         Send(
@@ -482,3 +592,18 @@ def build_generation_graph():
 
 
 generation_graph = build_generation_graph()
+
+
+def build_screen_edit_graph():
+    graph = StateGraph(ScreenEditState)
+    graph.add_node("analyze_edit_instruction", analyze_edit_instruction)
+    graph.add_node("regenerate_edited_screen", regenerate_edited_screen)
+
+    graph.add_edge(START, "analyze_edit_instruction")
+    graph.add_edge("analyze_edit_instruction", "regenerate_edited_screen")
+    graph.add_edge("regenerate_edited_screen", END)
+
+    return graph.compile()
+
+
+screen_edit_graph = build_screen_edit_graph()

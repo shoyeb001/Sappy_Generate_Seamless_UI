@@ -6,10 +6,14 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 
-from app.ai.workflow import generation_graph
+from app.ai.workflow import generation_graph, screen_edit_graph
 from app.middleware.auth import get_current_user
 from app.schemas.auth import AuthUser
-from app.schemas.generation import CreateProjectRequest, CreateProjectResponse
+from app.schemas.generation import (
+    CreateProjectRequest,
+    CreateProjectResponse,
+    EditScreenRequest,
+)
 from app.services.settings_service import SettingsService, get_settings_service
 
 router = APIRouter(prefix="/projects", tags=["generation"])
@@ -147,6 +151,102 @@ async def stream_project_generation(
         _stream_generation_events(
             request,
             project_id,
+            current_user,
+            llm_credentials.model_dump(),
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+async def _stream_screen_edit_events(
+    request: EditScreenRequest,
+    edit_id: str,
+    current_user: AuthUser,
+    llm_credentials: dict,
+) -> AsyncIterator[str]:
+    yield _sse_event(
+        "screen_edit_started",
+        {
+            "edit_id": edit_id,
+            "screen_id": request.screen.id,
+            "instruction": request.instruction,
+        },
+    )
+
+    try:
+        async for update in screen_edit_graph.astream(
+            {
+                "instruction": request.instruction,
+                "original_prompt": request.original_prompt,
+                "user_id": current_user.id,
+                "llm_credentials": llm_credentials,
+                "project": request.project,
+                "design_system": request.design_system,
+                "screen_plan": request.screen_plan,
+                "screen": request.screen,
+                "errors": [],
+            },
+            stream_mode="updates",
+        ):
+            if "analyze_edit_instruction" in update:
+                edit_decision = update["analyze_edit_instruction"].get("edit_decision")
+                if edit_decision:
+                    yield _sse_event(
+                        "screen_edit_decision_completed",
+                        {
+                            "edit_id": edit_id,
+                            "screen_id": request.screen.id,
+                            "decision": edit_decision,
+                        },
+                    )
+
+            if "regenerate_edited_screen" in update:
+                edited_screen = update["regenerate_edited_screen"].get("edited_screen")
+                if edited_screen:
+                    yield _sse_event(
+                        "screen_edit_completed",
+                        {
+                            "edit_id": edit_id,
+                            "screen": edited_screen,
+                        },
+                    )
+
+        yield _sse_event(
+            "screen_edit_stream_completed",
+            {
+                "edit_id": edit_id,
+                "screen_id": request.screen.id,
+            },
+        )
+    except Exception as exc:
+        yield _sse_event(
+            "screen_edit_failed",
+            {
+                "edit_id": edit_id,
+                "screen_id": request.screen.id,
+                "message": str(exc),
+            },
+        )
+
+
+@router.post("/screens/edit/stream")
+async def stream_screen_edit(
+    request: EditScreenRequest,
+    current_user: AuthUser = Depends(get_current_user),
+    settings_service: SettingsService = Depends(get_settings_service),
+) -> StreamingResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
+    return StreamingResponse(
+        _stream_screen_edit_events(
+            request,
+            str(uuid4()),
             current_user,
             llm_credentials.model_dump(),
         ),
