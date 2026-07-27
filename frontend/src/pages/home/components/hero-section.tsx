@@ -44,7 +44,7 @@ export const HeroSection = () => {
 
   return (
     <section className="flex flex-col items-center justify-center text-center pt-24 pb-16 px-4">
-      <Badge className="mb-6 tracking-widest uppercase text-[10px]">Aether v2.0 Preview</Badge>
+      {/* <Badge className="mb-6 tracking-widest uppercase text-[10px]">Aether v2.0 Preview</Badge> */}
       <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight max-w-4xl leading-tight mb-6">
         Design logic at the <br />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
@@ -83,7 +83,7 @@ export const HeroSection = () => {
           onClick={() => useSuggestion("A crypto dashboard with dark mode accents")}
           className="bg-slate-800/50 hover:bg-slate-800 text-slate-300 px-3 py-1 rounded-full transition-colors border border-slate-700/50"
         >
-          "A crypto dashboard with dark mode accents"
+          "Create a one page protfolio website with intro, projects and contact section"
         </button>
         <button
           type="button"
