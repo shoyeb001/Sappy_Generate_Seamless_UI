@@ -1,4 +1,4 @@
-import { RotateCcw, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { authSessionCleared } from "@/store/auth-slice";
 import { useAppDispatch, useAppSelector } from "@/store/store";

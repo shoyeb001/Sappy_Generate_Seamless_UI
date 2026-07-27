@@ -449,7 +449,7 @@ async def generate_screen_html(state: ScreenGenerationState) -> GenerationState:
             state,
             GENERATE_SCREEN_HTML_PROMPT,
             context,
-            max_tokens=15000,
+            max_tokens=20000,
             temperature=0.7,
         )
         if "html" in payload:
@@ -492,7 +492,7 @@ async def analyze_edit_instruction(state: ScreenEditState) -> ScreenEditState:
             EDIT_SCREEN_DECISION_PROMPT,
             context,
             max_tokens=900,
-            temperature=0.3,
+            temperature=0.5,
         )
         return {"edit_decision": ScreenEditDecision.model_validate(payload)}
     except Exception as exc:
@@ -531,8 +531,8 @@ async def regenerate_edited_screen(state: ScreenEditState) -> ScreenEditState:
             state,
             EDIT_SCREEN_HTML_PROMPT,
             context,
-            max_tokens=15000,
-            temperature=0.55,
+            max_tokens=20000,
+            temperature=0.7,
         )
         if "html" in payload:
             payload["html"] = _strip_markdown_fences(payload["html"])

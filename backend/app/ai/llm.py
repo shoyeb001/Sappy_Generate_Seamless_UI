@@ -57,21 +57,6 @@ class LLMClient:
     ) -> str:
         last_error: Exception | None = None
 
-        if self.openrouter_client:
-            try:
-                response = await self.openrouter_client.chat.completions.create(
-                    model=self.openrouter_model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    **kwargs,
-                )
-                content = response.choices[0].message.content
-                return content or ""
-            except Exception as exc:
-                last_error = exc
-                print(f"OpenRouter call failed; trying Hugging Face fallback: {exc}")
-
         if self.huggingface_client:
             try:
                 response = await self.huggingface_client.chat.completions.create(
@@ -89,7 +74,20 @@ class LLMClient:
                         f"OpenRouter failed: {last_error}; Hugging Face failed: {exc}"
                     ) from exc
                 raise
-
+        if self.openrouter_client:
+            try:
+                response = await self.openrouter_client.chat.completions.create(
+                    model=self.openrouter_model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    **kwargs,
+                )
+                content = response.choices[0].message.content
+                return content or ""
+            except Exception as exc:
+                last_error = exc
+                print(f"OpenRouter call failed; trying Hugging Face fallback: {exc}")
         if last_error:
             raise RuntimeError(
                 f"OpenRouter failed and no Hugging Face token is configured: {last_error}"

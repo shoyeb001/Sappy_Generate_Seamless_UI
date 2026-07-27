@@ -52,7 +52,12 @@ async def init_database() -> None:
             "Configure DATABASE_URL, SUPABASE_DATABASE_URL, or SUPABASE_URL with a Postgres connection string."
         )
 
-    _pool = await asyncpg.create_pool(dsn=settings.postgres_url, min_size=1, max_size=5)
+    _pool = await asyncpg.create_pool(
+        dsn=settings.postgres_url,
+        min_size=1,
+        max_size=5,
+        statement_cache_size=0,
+    )
     async with _pool.acquire() as connection:
         await connection.execute(CREATE_AUTH_TABLES_SQL)
 
