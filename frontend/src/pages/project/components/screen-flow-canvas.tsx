@@ -1,18 +1,18 @@
-import type { GeneratedScreen, ScreenPlan } from "@/store/generation-types"
 import {
   Background,
   Controls,
   Handle,
+  type Node,
+  type NodeProps,
   NodeResizer,
   Position,
   ReactFlow,
   useNodesState,
-  type Node,
-  type NodeProps,
 } from "@xyflow/react"
+import type { GeneratedScreen, ScreenPlan } from "@/store/generation-types"
 import "@xyflow/react/dist/style.css"
 import { Frame, Loader2 } from "lucide-react"
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 
 type ScreenNodeData = {
   id: string
@@ -45,12 +45,9 @@ function ScreenNode({
   const frameWidth = Math.max(width ?? DEFAULT_NODE_WIDTH, MIN_NODE_WIDTH)
   const frameHeight = Math.max(
     (height ?? DEFAULT_NODE_HEIGHT) - NODE_LABEL_HEIGHT,
-    MIN_NODE_HEIGHT - NODE_LABEL_HEIGHT,
+    MIN_NODE_HEIGHT - NODE_LABEL_HEIGHT
   )
-  const scale = Math.min(
-    frameWidth / screenWidth,
-    frameHeight / screenHeight,
-  )
+  const scale = Math.min(frameWidth / screenWidth, frameHeight / screenHeight)
 
   return (
     <div className="group relative" style={{ width: frameWidth }}>
@@ -61,13 +58,9 @@ function ScreenNode({
         minWidth={MIN_NODE_WIDTH}
       />
 
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="opacity-0"
-      />
+      <Handle type="target" position={Position.Left} className="opacity-0" />
 
-      <div className="mb-2 flex max-w-full items-center gap-2 text-[13px] font-medium text-slate-200">
+      <div className="mb-2 flex max-w-full items-center gap-2 font-medium text-[13px] text-slate-200">
         <Frame className="size-4 shrink-0 text-cyan-300" />
         <span className="truncate">{data.name}</span>
         {data.status === "planned" ? (
@@ -101,7 +94,7 @@ function ScreenNode({
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0b1220]">
             <div className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.08),transparent)]" />
             <div className="relative grid h-[178px] w-[284px] grid-cols-[72px_1fr] gap-3 rounded-sm border border-white/10 bg-slate-950/70 p-3">
-              <div className="space-y-2 border-r border-white/10 pr-3">
+              <div className="space-y-2 border-white/10 border-r pr-3">
                 <div className="h-4 rounded-sm bg-cyan-300/45" />
                 <div className="h-3 rounded-sm bg-white/16" />
                 <div className="h-3 rounded-sm bg-white/16" />
@@ -121,11 +114,7 @@ function ScreenNode({
         )}
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="opacity-0"
-      />
+      <Handle type="source" position={Position.Right} className="opacity-0" />
     </div>
   )
 }
@@ -160,12 +149,11 @@ export function ScreenFlowCanvas({
 }: ScreenFlowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ScreenFlowNode>([])
 
-  const generatedById = useMemo(
-    () => new Map(generatedScreens.map((screen) => [screen.id, screen])),
-    [generatedScreens],
+  const generatedById = new Map(
+    generatedScreens.map((screen) => [screen.id, screen])
   )
 
-  const plannedNodes = useMemo<ScreenFlowNode[]>(() => {
+  const plannedNodes: ScreenFlowNode[] = (() => {
     const baseScreens =
       screens.length > 0
         ? screens
@@ -196,7 +184,7 @@ export function ScreenFlowCanvas({
         },
       }
     })
-  }, [generatedById, generatedScreens, screens])
+  })()
 
   useEffect(() => {
     setNodes((currentNodes) => {

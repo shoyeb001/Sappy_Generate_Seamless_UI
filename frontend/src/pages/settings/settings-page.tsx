@@ -1,14 +1,14 @@
+import { KeyRound, ShieldCheck, TriangleAlert } from "lucide-react"
+import { type FormEvent, useEffect, useState } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   getLLMCredentialsStatus,
-  saveLLMCredentials,
   type LLMCredentialsStatus,
+  saveLLMCredentials,
 } from "@/store/settings-api"
 import { useAppSelector } from "@/store/store"
-import { KeyRound, ShieldCheck, TriangleAlert } from "lucide-react"
-import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router"
 
 function parseError(error: unknown) {
   if (error instanceof Error) {
@@ -35,10 +35,8 @@ export default function SettingsPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const nextPath = useMemo(() => {
-    const next = searchParams.get("next")
-    return next?.startsWith("/") ? next : "/"
-  }, [searchParams])
+  const nextPathParam = searchParams.get("next")
+  const nextPath = nextPathParam?.startsWith("/") ? nextPathParam : "/"
   const isRequired = searchParams.get("required") === "1"
 
   useEffect(() => {
@@ -100,14 +98,14 @@ export default function SettingsPage() {
         <KeyRound className="size-3" />
         Provider settings
       </Badge>
-      <h1 className="text-4xl font-bold text-white">Connect your AI keys</h1>
-      <p className="mt-3 text-sm leading-6 text-slate-400">
+      <h1 className="font-bold text-4xl text-white">Connect your AI keys</h1>
+      <p className="mt-3 text-slate-400 text-sm leading-6">
         Add your OpenRouter API key and Hugging Face token. They are encrypted
         before being stored in Postgres.
       </p>
 
       {isRequired ? (
-        <div className="mt-6 flex gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+        <div className="mt-6 flex gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-amber-100 text-sm">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <p>
             Add both provider keys before generating UI. The generation API is
@@ -119,8 +117,8 @@ export default function SettingsPage() {
       <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-white">Current status</p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="font-medium text-sm text-white">Current status</p>
+            <p className="mt-1 text-slate-400 text-sm">
               {isLoading
                 ? "Checking saved keys..."
                 : status?.is_complete
@@ -130,7 +128,9 @@ export default function SettingsPage() {
           </div>
           <ShieldCheck
             className={
-              status?.is_complete ? "size-6 text-emerald-300" : "size-6 text-slate-600"
+              status?.is_complete
+                ? "size-6 text-emerald-300"
+                : "size-6 text-slate-600"
             }
           />
         </div>
@@ -141,7 +141,7 @@ export default function SettingsPage() {
         className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
       >
         <label
-          className="block text-sm font-medium text-slate-300"
+          className="block font-medium text-slate-300 text-sm"
           htmlFor="openrouter-api-key"
         >
           OpenRouter API key
@@ -157,7 +157,7 @@ export default function SettingsPage() {
         />
 
         <label
-          className="mt-5 block text-sm font-medium text-slate-300"
+          className="mt-5 block font-medium text-slate-300 text-sm"
           htmlFor="huggingface-token"
         >
           Hugging Face token
@@ -172,8 +172,10 @@ export default function SettingsPage() {
           placeholder="hf_..."
         />
 
-        {message ? <p className="mt-4 text-sm text-emerald-300">{message}</p> : null}
-        {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
+        {message ? (
+          <p className="mt-4 text-emerald-300 text-sm">{message}</p>
+        ) : null}
+        {error ? <p className="mt-4 text-red-300 text-sm">{error}</p> : null}
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Button
@@ -189,7 +191,7 @@ export default function SettingsPage() {
           </Button>
           <Link
             to="/"
-            className="inline-flex h-10 items-center rounded-xl border border-slate-700 px-4 text-sm text-slate-300 transition hover:border-cyan-300 hover:text-white"
+            className="inline-flex h-10 items-center rounded-xl border border-slate-700 px-4 text-slate-300 text-sm transition hover:border-cyan-300 hover:text-white"
           >
             Back home
           </Link>

@@ -40,12 +40,15 @@ function getExpiresAt(session: StoredAuthSession) {
 }
 
 export function isAuthSessionFresh(session: StoredAuthSession) {
-  return getExpiresAt(session) - REFRESH_WINDOW_SECONDS > Math.floor(Date.now() / 1000)
+  return (
+    getExpiresAt(session) - REFRESH_WINDOW_SECONDS >
+    Math.floor(Date.now() / 1000)
+  )
 }
 
 export async function refreshAuthSession(
   refreshToken: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<StoredAuthSession> {
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
     method: "POST",
@@ -74,6 +77,9 @@ export async function getValidAccessToken(signal?: AbortSignal) {
     return session.access_token
   }
 
-  const refreshedSession = await refreshAuthSession(session.refresh_token, signal)
+  const refreshedSession = await refreshAuthSession(
+    session.refresh_token,
+    signal
+  )
   return refreshedSession.access_token
 }

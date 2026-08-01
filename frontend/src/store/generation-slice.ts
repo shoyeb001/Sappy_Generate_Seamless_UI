@@ -46,7 +46,7 @@ const initialState: GenerationState = {
 function ensureProject(
   state: GenerationState,
   projectId: string,
-  prompt = "",
+  prompt = ""
 ): ProjectGenerationState {
   const existing = state.projects[projectId]
   if (existing) {
@@ -96,12 +96,12 @@ const generationSlice = createSlice({
       action: PayloadAction<{
         projectId: string
         prompt: string
-      }>,
+      }>
     ) => {
       const project = ensureProject(
         state,
         action.payload.projectId,
-        action.payload.prompt,
+        action.payload.prompt
       )
       project.status = "starting"
       project.prompt = action.payload.prompt
@@ -125,7 +125,7 @@ const generationSlice = createSlice({
       action: PayloadAction<{
         projectId: string
         event: GenerationEvent
-      }>,
+      }>
     ) => {
       const project = ensureProject(state, action.payload.projectId)
       const event = action.payload.event
@@ -154,7 +154,7 @@ const generationSlice = createSlice({
           project.status = "generating"
           const screen = event.data.screen
           const existingIndex = project.generatedScreens.findIndex(
-            (item) => item.id === screen.id,
+            (item) => item.id === screen.id
           )
           if (existingIndex >= 0) {
             project.generatedScreens[existingIndex] = screen
@@ -193,7 +193,7 @@ const generationSlice = createSlice({
           project.edit.error = null
           const screen = event.data.screen
           const existingIndex = project.generatedScreens.findIndex(
-            (item) => item.id === screen.id,
+            (item) => item.id === screen.id
           )
           if (existingIndex >= 0) {
             project.generatedScreens[existingIndex] = screen

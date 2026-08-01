@@ -1,9 +1,9 @@
+import { LockKeyhole, Mail, Sparkles } from "lucide-react"
+import { type FormEvent, useState } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useLoginMutation, useSignupMutation } from "@/store/auth-api"
-import { LockKeyhole, Mail, Sparkles } from "lucide-react"
-import { useMemo, useState, type FormEvent } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router"
 
 type AuthMode = "login" | "signup"
 
@@ -44,10 +44,8 @@ export default function AuthPage() {
   const error = loginState.error ?? signupState.error
   const submitLabel = mode === "login" ? "Log in" : "Create account"
 
-  const nextPath = useMemo(() => {
-    const next = searchParams.get("next")
-    return next?.startsWith("/") ? next : "/"
-  }, [searchParams])
+  const nextPathParam = searchParams.get("next")
+  const nextPath = nextPathParam?.startsWith("/") ? nextPathParam : "/"
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -80,10 +78,10 @@ export default function AuthPage() {
         <Sparkles className="size-3" />
         Aether account
       </Badge>
-      <h1 className="text-4xl font-bold text-white">
+      <h1 className="font-bold text-4xl text-white">
         {mode === "login" ? "Log in to generate UI" : "Create your account"}
       </h1>
-      <p className="mt-3 text-sm leading-6 text-slate-400">
+      <p className="mt-3 text-slate-400 text-sm leading-6">
         Email and password only. No verification code is required.
       </p>
 
@@ -91,7 +89,10 @@ export default function AuthPage() {
         onSubmit={(event) => void handleSubmit(event)}
         className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
       >
-        <label className="block text-sm font-medium text-slate-300" htmlFor="email">
+        <label
+          className="block font-medium text-slate-300 text-sm"
+          htmlFor="email"
+        >
           Email
         </label>
         <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3">
@@ -108,7 +109,7 @@ export default function AuthPage() {
         </div>
 
         <label
-          className="mt-5 block text-sm font-medium text-slate-300"
+          className="mt-5 block font-medium text-slate-300 text-sm"
           htmlFor="password"
         >
           Password
@@ -118,7 +119,9 @@ export default function AuthPage() {
           <input
             id="password"
             type="password"
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            autoComplete={
+              mode === "login" ? "current-password" : "new-password"
+            }
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
@@ -127,7 +130,7 @@ export default function AuthPage() {
         </div>
 
         {error ? (
-          <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-200 text-sm">
             {getErrorMessage(error)}
           </p>
         ) : null}

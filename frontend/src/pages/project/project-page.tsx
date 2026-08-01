@@ -1,11 +1,4 @@
-import { Badge } from "@/components/ui/badge"
-import {
-  useStartGenerationStreamMutation,
-  useStartScreenEditStreamMutation,
-} from "@/store/generation-api"
-import type { GeneratedScreen, GenerationStatus } from "@/store/generation-types"
-import { getLLMCredentialsStatus } from "@/store/settings-api"
-import { useAppSelector } from "@/store/store"
+import { toJpeg, toPng } from "html-to-image"
 import {
   CheckCircle2,
   Circle,
@@ -19,9 +12,19 @@ import {
   X,
   XCircle,
 } from "lucide-react"
-import { toJpeg, toPng } from "html-to-image"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
+import { Badge } from "@/components/ui/badge"
+import {
+  useStartGenerationStreamMutation,
+  useStartScreenEditStreamMutation,
+} from "@/store/generation-api"
+import type {
+  GeneratedScreen,
+  GenerationStatus,
+} from "@/store/generation-types"
+import { getLLMCredentialsStatus } from "@/store/settings-api"
+import { useAppSelector } from "@/store/store"
 import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
 const statusCopy: Record<GenerationStatus, string> = {
@@ -60,7 +63,7 @@ function getStepState(
   events: string[],
   status: GenerationStatus,
   currentEvent: string,
-  nextEvent?: string,
+  nextEvent?: string
 ): StepState {
   if (status === "failed") {
     return hasEvent(events, currentEvent) ? "complete" : "failed"
@@ -120,7 +123,7 @@ function createExportFrame(screen: GeneratedScreen) {
 function waitForExportFrame(
   frame: HTMLIFrameElement,
   screen: GeneratedScreen,
-  timeoutMs = 5000,
+  timeoutMs = 5000
 ) {
   return new Promise<void>((resolve) => {
     const markReady = () => {
@@ -171,13 +174,15 @@ export default function ProjectPage() {
   const [exportError, setExportError] = useState<string | null>(null)
 
   const project = useAppSelector((state) =>
-    projectId ? state.generation.projects[projectId] : undefined,
+    projectId ? state.generation.projects[projectId] : undefined
   )
   const session = useAppSelector((state) => state.auth.session)
 
   useEffect(() => {
     if (!session) {
-      navigate(`/auth?next=${encodeURIComponent(projectId ? `/project/${projectId}` : "/")}`)
+      navigate(
+        `/auth?next=${encodeURIComponent(projectId ? `/project/${projectId}` : "/")}`
+      )
       return
     }
 
@@ -191,7 +196,7 @@ export default function ProjectPage() {
       const credentialsStatus = await getLLMCredentialsStatus(controller.signal)
       if (!credentialsStatus.is_complete) {
         navigate(
-          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`,
+          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`
         )
         return
       }
@@ -206,7 +211,7 @@ export default function ProjectPage() {
     void startIfConfigured().catch(() => {
       if (!controller.signal.aborted) {
         navigate(
-          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`,
+          `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`
         )
       }
     })
@@ -214,14 +219,19 @@ export default function ProjectPage() {
     return () => controller.abort()
   }, [navigate, project?.prompt, projectId, session, startGeneration])
 
-  const steps = useMemo(() => {
+  const steps = (() => {
     const events = project?.events ?? []
     const status = project?.status ?? "idle"
 
     return [
       {
         label: "Design started",
-        state: getStepState(events, status, "generation_started", "project_planned"),
+        state: getStepState(
+          events,
+          status,
+          "generation_started",
+          "project_planned"
+        ),
       },
       {
         label: "Product mapped",
@@ -229,7 +239,7 @@ export default function ProjectPage() {
           events,
           status,
           "project_planned",
-          "design_system_completed",
+          "design_system_completed"
         ),
       },
       {
@@ -238,12 +248,17 @@ export default function ProjectPage() {
           events,
           status,
           "design_system_completed",
-          "screens_planned",
+          "screens_planned"
         ),
       },
       {
         label: "Frames planned",
-        state: getStepState(events, status, "screens_planned", "screen_completed"),
+        state: getStepState(
+          events,
+          status,
+          "screens_planned",
+          "screen_completed"
+        ),
       },
       {
         label: "Composing frames",
@@ -255,32 +270,29 @@ export default function ProjectPage() {
               : "pending",
       },
     ] satisfies Array<{ label: string; state: StepState }>
-  }, [project?.events, project?.status])
+  })()
 
-  const selectedScreen = useMemo(() => {
-    return (
-      project?.generatedScreens.find((screen) => screen.id === selectedScreenId) ??
-      null
-    )
-  }, [project?.generatedScreens, selectedScreenId])
+  const selectedScreen =
+    project?.generatedScreens.find(
+      (screen) => screen.id === selectedScreenId
+    ) ?? null
 
-  const selectedScreenPlan = useMemo(() => {
-    return project?.screens.find((screen) => screen.id === selectedScreenId) ?? null
-  }, [project?.screens, selectedScreenId])
+  const selectedScreenPlan =
+    project?.screens.find((screen) => screen.id === selectedScreenId) ?? null
 
-  const handleSelectScreen = useCallback((screenId: string | null) => {
+  const handleSelectScreen = (screenId: string | null) => {
     setSelectedScreenId(screenId)
     setExportError(null)
     setExportStatus(null)
-  }, [])
+  }
 
-  const handleClearSelectedScreen = useCallback(() => {
+  const handleClearSelectedScreen = () => {
     setSelectedScreenId(null)
     setExportError(null)
     setExportStatus(null)
-  }, [])
+  }
 
-  const handleEditSelectedScreen = useCallback(async () => {
+  const handleEditSelectedScreen = async () => {
     if (!projectId || !project || !selectedScreen || !editInstruction.trim()) {
       return
     }
@@ -294,16 +306,9 @@ export default function ProjectPage() {
       screenPlan: selectedScreenPlan,
       screen: selectedScreen,
     })
-  }, [
-    editInstruction,
-    project,
-    projectId,
-    selectedScreen,
-    selectedScreenPlan,
-    startScreenEdit,
-  ])
+  }
 
-  const handleCopyHtml = useCallback(async () => {
+  const handleCopyHtml = async () => {
     if (!selectedScreen) {
       return
     }
@@ -325,70 +330,69 @@ export default function ProjectPage() {
       textArea.remove()
       setExportStatus("HTML copied")
     }
-  }, [selectedScreen])
+  }
 
-  const handleExportImage = useCallback(
-    async (format: "png" | "jpg") => {
-      if (!selectedScreen) {
-        return
+  const handleExportImage = async (format: "png" | "jpg") => {
+    if (!selectedScreen) {
+      return
+    }
+
+    setExportError(null)
+    setExportStatus(`Exporting ${format.toUpperCase()}...`)
+
+    const frame = createExportFrame(selectedScreen)
+
+    try {
+      await waitForExportFrame(frame, selectedScreen)
+      await wait(1200)
+      const root = getExportRoot(frame)
+
+      const options = {
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+        canvasHeight: selectedScreen.height,
+        canvasWidth: selectedScreen.width,
+        height: selectedScreen.height,
+        pixelRatio: 1,
+        skipFonts: true,
+        width: selectedScreen.width,
       }
 
-      setExportError(null)
-      setExportStatus(`Exporting ${format.toUpperCase()}...`)
+      const dataUrl =
+        format === "png"
+          ? await toPng(root, options)
+          : await toJpeg(root, {
+              ...options,
+              quality: 0.95,
+            })
 
-      const frame = createExportFrame(selectedScreen)
-
-      try {
-        await waitForExportFrame(frame, selectedScreen)
-        await wait(1200)
-        const root = getExportRoot(frame)
-
-        const options = {
-          backgroundColor: "#ffffff",
-          cacheBust: true,
-          canvasHeight: selectedScreen.height,
-          canvasWidth: selectedScreen.width,
-          height: selectedScreen.height,
-          pixelRatio: 1,
-          skipFonts: true,
-          width: selectedScreen.width,
-        }
-
-        const dataUrl =
-          format === "png"
-            ? await toPng(root, options)
-            : await toJpeg(root, {
-                ...options,
-                quality: 0.95,
-              })
-
-        downloadDataUrl(dataUrl, getExportFileName(selectedScreen, format))
-        setExportStatus(`${format.toUpperCase()} exported`)
-      } catch (error) {
-        setExportError(
-          error instanceof Error
-            ? error.message
-            : "Unable to export the selected frame.",
-        )
-        setExportStatus(null)
-      } finally {
-        frame.remove()
-      }
-    },
-    [selectedScreen],
-  )
+      downloadDataUrl(dataUrl, getExportFileName(selectedScreen, format))
+      setExportStatus(`${format.toUpperCase()} exported`)
+    } catch (error) {
+      setExportError(
+        error instanceof Error
+          ? error.message
+          : "Unable to export the selected frame."
+      )
+      setExportStatus(null)
+    } finally {
+      frame.remove()
+    }
+  }
 
   if (!projectId || !project) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-6 text-center">
         <Badge className="mb-5">No active prompt</Badge>
-        <h1 className="text-4xl font-bold text-white">Start from the landing page</h1>
+        <h1 className="font-bold text-4xl text-white">
+          Start from the landing page
+        </h1>
         <p className="mt-4 text-slate-400">
           This project route needs a prompt from the generator form.
         </p>
         <Link
           to="/"
-          className="mt-8 inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+          className="mt-8 inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/80"
         >
           Create a UI
         </Link>
@@ -405,44 +409,54 @@ export default function ProjectPage() {
               <Sparkles className="size-5" />
             </div>
             <div>
-              <p className="text-sm text-slate-400">Design status</p>
-              <h1 className="font-semibold text-white">{statusCopy[project.status]}</h1>
+              <p className="text-slate-400 text-sm">Design status</p>
+              <h1 className="font-semibold text-white">
+                {statusCopy[project.status]}
+              </h1>
             </div>
           </div>
 
           <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-xs uppercase tracking-widest text-slate-500">Prompt</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">{project.prompt}</p>
+            <p className="text-slate-500 text-xs uppercase tracking-widest">
+              Prompt
+            </p>
+            <p className="mt-2 text-slate-300 text-sm leading-6">
+              {project.prompt}
+            </p>
           </div>
 
           <div className="mt-6 space-y-4">
             {steps.map((step) => (
               <div key={step.label} className="flex items-center gap-3">
                 <StepIcon state={step.state} />
-                <span className="text-sm text-slate-300">{step.label}</span>
+                <span className="text-slate-300 text-sm">{step.label}</span>
               </div>
             ))}
           </div>
 
           {project.project ? (
             <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <p className="text-xs uppercase tracking-widest text-slate-500">Project</p>
-              <h2 className="mt-2 text-lg font-semibold text-white">
+              <p className="text-slate-500 text-xs uppercase tracking-widest">
+                Project
+              </p>
+              <h2 className="mt-2 font-semibold text-lg text-white">
                 {project.project.name}
               </h2>
-              <p className="mt-1 text-sm text-slate-400">{project.project.type}</p>
+              <p className="mt-1 text-slate-400 text-sm">
+                {project.project.type}
+              </p>
             </div>
           ) : null}
 
           {project.error || streamState.error ? (
-            <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+            <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200 text-sm">
               {project.error ?? "Unable to connect to the generation stream."}
             </div>
           ) : null}
 
           <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-widest text-slate-500">
+              <p className="text-slate-500 text-xs uppercase tracking-widest">
                 Edit frame
               </p>
               {project.edit.status === "understanding" ||
@@ -453,7 +467,7 @@ export default function ProjectPage() {
 
             <div className="mt-3 min-h-8">
               {selectedScreen ? (
-                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-xs font-medium text-cyan-100">
+                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 font-medium text-cyan-100 text-xs">
                   <span className="truncate">{selectedScreen.name}</span>
                   <button
                     type="button"
@@ -465,7 +479,7 @@ export default function ProjectPage() {
                   </button>
                 </span>
               ) : (
-                <p className="text-sm leading-6 text-slate-400">
+                <p className="text-slate-400 text-sm leading-6">
                   Select one completed frame to edit it.
                 </p>
               )}
@@ -475,7 +489,7 @@ export default function ProjectPage() {
               value={editInstruction}
               onChange={(event) => setEditInstruction(event.target.value)}
               placeholder="Describe the change for the selected frame..."
-              className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm leading-6 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
+              className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-slate-100 text-sm leading-6 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
             />
 
             <button
@@ -488,7 +502,7 @@ export default function ProjectPage() {
                 project.edit.status === "regenerating" ||
                 editStreamState.isLoading
               }
-              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 font-semibold text-slate-950 text-sm transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
             >
               {project.edit.status === "understanding" ||
               project.edit.status === "regenerating" ||
@@ -501,7 +515,7 @@ export default function ProjectPage() {
             </button>
 
             {project.edit.status !== "idle" ? (
-              <p className="mt-3 text-sm text-slate-400">
+              <p className="mt-3 text-slate-400 text-sm">
                 {project.edit.status === "understanding"
                   ? "Understanding the edit..."
                   : project.edit.status === "regenerating"
@@ -513,35 +527,35 @@ export default function ProjectPage() {
             ) : null}
 
             {project.edit.decision ? (
-              <p className="mt-2 text-xs leading-5 text-slate-500">
+              <p className="mt-2 text-slate-500 text-xs leading-5">
                 {project.edit.decision.summary}
               </p>
             ) : null}
 
             {project.edit.error || editStreamState.error ? (
-              <p className="mt-3 text-sm text-red-300">
+              <p className="mt-3 text-red-300 text-sm">
                 {project.edit.error ?? "Unable to connect to the edit stream."}
               </p>
             ) : null}
           </div>
 
           <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-xs uppercase tracking-widest text-slate-500">
+            <p className="text-slate-500 text-xs uppercase tracking-widest">
               Selected frame
             </p>
             {selectedScreen ? (
               <>
-                <h2 className="mt-2 truncate text-lg font-semibold text-white">
+                <h2 className="mt-2 truncate font-semibold text-lg text-white">
                   {selectedScreen.name}
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-slate-400 text-sm">
                   {selectedScreen.width} x {selectedScreen.height}
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={handleCopyHtml}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
                   >
                     <Clipboard className="size-3.5" />
                     HTML
@@ -549,7 +563,7 @@ export default function ProjectPage() {
                   <button
                     type="button"
                     onClick={() => void handleExportImage("png")}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
                   >
                     <FileImage className="size-3.5" />
                     PNG
@@ -557,21 +571,23 @@ export default function ProjectPage() {
                   <button
                     type="button"
                     onClick={() => void handleExportImage("jpg")}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs font-medium text-slate-100 transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
                   >
                     <Download className="size-3.5" />
                     JPG
                   </button>
                 </div>
                 {exportStatus ? (
-                  <p className="mt-3 text-sm text-emerald-300">{exportStatus}</p>
+                  <p className="mt-3 text-emerald-300 text-sm">
+                    {exportStatus}
+                  </p>
                 ) : null}
                 {exportError ? (
-                  <p className="mt-3 text-sm text-red-300">{exportError}</p>
+                  <p className="mt-3 text-red-300 text-sm">{exportError}</p>
                 ) : null}
               </>
             ) : (
-              <p className="mt-2 text-sm leading-6 text-slate-400">
+              <p className="mt-2 text-slate-400 text-sm leading-6">
                 Select a completed frame on the canvas to copy or export it.
               </p>
             )}
@@ -581,9 +597,10 @@ export default function ProjectPage() {
         <div className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-slate-400">UI frames</p>
-              <h2 className="text-2xl font-semibold text-white">
-                {project.generatedScreens.length} of {project.screens.length || "..."} ready
+              <p className="text-slate-400 text-sm">UI frames</p>
+              <h2 className="font-semibold text-2xl text-white">
+                {project.generatedScreens.length} of{" "}
+                {project.screens.length || "..."} ready
               </h2>
             </div>
             <Badge className="gap-1">

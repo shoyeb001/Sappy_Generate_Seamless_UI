@@ -20,7 +20,7 @@ export async function getLLMCredentialsStatus(signal?: AbortSignal) {
         Authorization: `Bearer ${accessToken}`,
       },
       signal,
-    },
+    }
   )
 
   if (!response.ok) {
@@ -32,18 +32,21 @@ export async function getLLMCredentialsStatus(signal?: AbortSignal) {
 
 export async function saveLLMCredentials(
   credentials: SaveLLMCredentialsRequest,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ) {
   const accessToken = await getValidAccessToken(signal)
-  const response = await fetch(`${API_BASE_URL}/api/v1/settings/llm-credentials`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(credentials),
-    signal,
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/settings/llm-credentials`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+      signal,
+    }
+  )
 
   if (!response.ok) {
     throw new Error(await response.text())

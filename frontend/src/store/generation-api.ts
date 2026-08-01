@@ -1,7 +1,6 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react"
-
-import { generationEventReceived } from "./generation-slice"
 import { API_BASE_URL, getValidAccessToken } from "./auth-token"
+import { generationEventReceived } from "./generation-slice"
 import type {
   DesignSystem,
   GeneratedScreen,
@@ -66,15 +65,18 @@ export const generationApi = createApi({
       queryFn: async ({ projectId, prompt }, api) => {
         try {
           const accessToken = await getValidAccessToken(api.signal)
-          const response = await fetch(`${API_BASE_URL}/api/v1/projects/stream`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ prompt }),
-            signal: api.signal,
-          })
+          const response = await fetch(
+            `${API_BASE_URL}/api/v1/projects/stream`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ prompt }),
+              signal: api.signal,
+            }
+          )
 
           if (!response.ok) {
             return {
@@ -166,7 +168,7 @@ export const generationApi = createApi({
           screenPlan,
           screen,
         },
-        api,
+        api
       ) => {
         try {
           const accessToken = await getValidAccessToken(api.signal)
@@ -187,7 +189,7 @@ export const generationApi = createApi({
                 screen,
               }),
               signal: api.signal,
-            },
+            }
           )
 
           if (!response.ok) {

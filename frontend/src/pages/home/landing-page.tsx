@@ -4,15 +4,14 @@ import { HeroSection } from "./components/hero-section"
 import { WorkflowSection } from "./components/workflow-section"
 
 const LandingPage = () => {
-    return (
-        <>
-            <HeroSection />
-            <WorkflowSection />
-            <GallerySection />
-            <CtaSection />
-        </>
-
-    )
+  return (
+    <>
+      <HeroSection />
+      <WorkflowSection />
+      <GallerySection />
+      <CtaSection />
+    </>
+  )
 }
 
 export default LandingPage

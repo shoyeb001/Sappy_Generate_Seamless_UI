@@ -1,11 +1,11 @@
-import { Navbar } from "./components/commons/Navbar"
+import { createBrowserRouter } from "react-router"
+import { RouterProvider } from "react-router/dom"
 import { Footer } from "./components/commons/footer"
+import { Navbar } from "./components/commons/Navbar"
 import AuthPage from "./pages/auth/auth-page"
 import LandingPage from "./pages/home/landing-page"
 import ProjectPage from "./pages/project/project-page"
 import SettingsPage from "./pages/settings/settings-page"
-import { createBrowserRouter } from "react-router";
-import { RouterProvider } from "react-router/dom";
 
 const router = createBrowserRouter([
   {
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
     path: "/project/:projectId",
     element: <ProjectPage />,
   },
-]);
+])
 
 export function App() {
   return (
