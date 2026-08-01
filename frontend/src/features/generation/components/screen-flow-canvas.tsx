@@ -227,9 +227,10 @@ export function ScreenFlowCanvas({
         minZoom={0.2}
         maxZoom={1.2}
         nodesDraggable
+        className="[&_.react-flow__attribution]:bg-card! [&_.react-flow__attribution]:text-muted-foreground! [&_.react-flow__attribution_a]:text-muted-foreground!"
       >
         <Background color="var(--border)" gap={24} size={1.25} />
-        <Controls className="border border-border bg-card text-foreground [&_button:hover]:bg-muted [&_button]:border-border [&_button]:bg-card [&_button_svg]:fill-foreground" />
+        <Controls className="overflow-hidden rounded-md border border-border shadow-none [&_button]:border-border! [&_button]:bg-card! [&_button]:text-foreground! [&_button:hover]:bg-muted! [&_button_path]:fill-foreground!" />
       </ReactFlow>
     </div>
   )

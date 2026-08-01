@@ -113,8 +113,8 @@ export const ProjectPage = () => {
   }
 
   return (
-    <section className="min-h-screen px-4 py-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[360px_1fr]">
+    <section className="min-h-screen px-6 py-10">
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <ProjectSidebar
           project={project}
           selectedScreen={selectedScreen}
