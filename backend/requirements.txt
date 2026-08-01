@@ -3,9 +3,11 @@ uvicorn[standard]==0.52.0
 python-dotenv==1.2.2
 pydantic==2.13.4
 pydantic-settings==2.14.2
+sqlalchemy[asyncio]==2.0.44
 asyncpg==0.31.0
 cryptography==50.0.0
+pyjwt==2.10.1
+argon2-cffi==25.1.0
 redis==8.1.0
 openai==2.52.0
 langgraph==1.2.10
-langchain-openai==1.4.1

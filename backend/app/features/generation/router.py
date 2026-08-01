@@ -1,0 +1,226 @@
+import json
+from collections.abc import AsyncIterator
+from uuid import uuid4
+
+from fastapi import APIRouter
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import StreamingResponse
+
+from app.features.auth.dependencies import CurrentUserDep
+from app.features.generation.ai.workflow import generation_graph, screen_edit_graph
+from app.features.generation.schemas import (
+    CreateProjectRequest,
+    CreateProjectResponse,
+    EditScreenRequest,
+)
+from app.features.settings.router import SettingsServiceDep
+
+router = APIRouter(prefix="/projects", tags=["generation"])
+
+_SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
+
+
+def _sse_event(event_type: str, data: dict) -> str:
+    return f"event: {event_type}\ndata: {json.dumps(jsonable_encoder(data))}\n\n"
+
+
+@router.post("", response_model=CreateProjectResponse)
+async def create_project(
+    request: CreateProjectRequest,
+    current_user: CurrentUserDep,
+    settings_service: SettingsServiceDep,
+) -> CreateProjectResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
+    result = await generation_graph.ainvoke(
+        {
+            "prompt": request.prompt,
+            "user_id": current_user.id,
+            "llm_credentials": llm_credentials.model_dump(),
+            "errors": [],
+        }
+    )
+
+    return CreateProjectResponse(
+        project_id=str(uuid4()),
+        status="generated",
+        prompt=request.prompt,
+        classification=result["classification"],
+        project=result["project"],
+        design_system=result["design_system"],
+        screens=result["screens"],
+        generated_screens=result["generated_screens"],
+    )
+
+
+async def _stream_generation_events(
+    prompt: str,
+    project_id: str,
+    user_id: str,
+    llm_credentials: dict,
+) -> AsyncIterator[str]:
+    yield _sse_event(
+        "generation_started",
+        {"project_id": project_id, "prompt": prompt},
+    )
+
+    final_screen_count = 0
+
+    try:
+        async for update in generation_graph.astream(
+            {
+                "prompt": prompt,
+                "user_id": user_id,
+                "llm_credentials": llm_credentials,
+                "errors": [],
+            },
+            stream_mode="updates",
+        ):
+            if "plan_project" in update:
+                project = update["plan_project"].get("project")
+                if project:
+                    yield _sse_event("project_planned", {"project": project})
+
+            if "build_design_system" in update:
+                design_system = update["build_design_system"].get("design_system")
+                if design_system:
+                    yield _sse_event(
+                        "design_system_completed",
+                        {"design_system": design_system},
+                    )
+
+            if "plan_screens" in update:
+                screens = update["plan_screens"].get("screens")
+                if screens:
+                    yield _sse_event("screens_planned", {"screens": screens})
+
+            if "generate_screen_html" in update:
+                generated_screens = update["generate_screen_html"].get(
+                    "generated_screens", []
+                )
+                for screen in generated_screens:
+                    final_screen_count += 1
+                    yield _sse_event("screen_completed", {"screen": screen})
+
+        yield _sse_event(
+            "generation_completed",
+            {"project_id": project_id, "screen_count": final_screen_count},
+        )
+    except Exception as exc:
+        yield _sse_event(
+            "generation_failed",
+            {"project_id": project_id, "message": str(exc)},
+        )
+
+
+@router.post("/stream")
+async def stream_project_generation(
+    request: CreateProjectRequest,
+    current_user: CurrentUserDep,
+    settings_service: SettingsServiceDep,
+) -> StreamingResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
+    project_id = str(uuid4())
+    return StreamingResponse(
+        _stream_generation_events(
+            request.prompt,
+            project_id,
+            current_user.id,
+            llm_credentials.model_dump(),
+        ),
+        media_type="text/event-stream",
+        headers=_SSE_HEADERS,
+    )
+
+
+async def _stream_screen_edit_events(
+    request: EditScreenRequest,
+    edit_id: str,
+    user_id: str,
+    llm_credentials: dict,
+) -> AsyncIterator[str]:
+    yield _sse_event(
+        "screen_edit_started",
+        {
+            "edit_id": edit_id,
+            "screen_id": request.screen.id,
+            "instruction": request.instruction,
+        },
+    )
+
+    try:
+        async for update in screen_edit_graph.astream(
+            {
+                "instruction": request.instruction,
+                "original_prompt": request.original_prompt,
+                "user_id": user_id,
+                "llm_credentials": llm_credentials,
+                "project": request.project,
+                "design_system": request.design_system,
+                "screen_plan": request.screen_plan,
+                "screen": request.screen,
+                "errors": [],
+            },
+            stream_mode="updates",
+        ):
+            if "analyze_edit_instruction" in update:
+                edit_decision = update["analyze_edit_instruction"].get("edit_decision")
+                if edit_decision:
+                    yield _sse_event(
+                        "screen_edit_decision_completed",
+                        {
+                            "edit_id": edit_id,
+                            "screen_id": request.screen.id,
+                            "decision": edit_decision,
+                        },
+                    )
+
+            if "regenerate_edited_screen" in update:
+                edited_screen = update["regenerate_edited_screen"].get("edited_screen")
+                if edited_screen:
+                    yield _sse_event(
+                        "screen_edit_completed",
+                        {"edit_id": edit_id, "screen": edited_screen},
+                    )
+
+        yield _sse_event(
+            "screen_edit_stream_completed",
+            {"edit_id": edit_id, "screen_id": request.screen.id},
+        )
+    except Exception as exc:
+        yield _sse_event(
+            "screen_edit_failed",
+            {
+                "edit_id": edit_id,
+                "screen_id": request.screen.id,
+                "message": str(exc),
+            },
+        )
+
+
+@router.post("/screens/edit/stream")
+async def stream_screen_edit(
+    request: EditScreenRequest,
+    current_user: CurrentUserDep,
+    settings_service: SettingsServiceDep,
+) -> StreamingResponse:
+    llm_credentials = await settings_service.get_decrypted_llm_credentials(
+        user_id=current_user.id,
+    )
+    return StreamingResponse(
+        _stream_screen_edit_events(
+            request,
+            str(uuid4()),
+            current_user.id,
+            llm_credentials.model_dump(),
+        ),
+        media_type="text/event-stream",
+        headers=_SSE_HEADERS,
+    )
