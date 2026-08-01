@@ -61,8 +61,8 @@ export const AuthPage = () => {
   return (
     <section className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-6 py-16">
       <div className="mb-6 flex items-center gap-2">
-        <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Sparkles className="size-4" />
+        <span className="flex size-6 items-center justify-center rounded-md bg-foreground text-background">
+          <Sparkles className="size-3.5" />
         </span>
         <span className="font-medium text-muted-foreground text-sm">
           Sappy account

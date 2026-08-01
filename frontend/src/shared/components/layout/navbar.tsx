@@ -24,10 +24,10 @@ export const Navbar = () => {
     <nav className="sticky top-0 z-50 flex items-center justify-between border-border/60 border-b bg-background/80 px-6 py-3 backdrop-blur-md">
       <div className="flex items-center gap-8">
         <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="size-4" />
+          <span className="flex size-6 items-center justify-center rounded-md bg-foreground text-background">
+            <Sparkles className="size-3.5" />
           </span>
-          <span className="font-semibold text-foreground text-lg tracking-tight">
+          <span className="font-semibold text-foreground tracking-tight">
             Sappy AI
           </span>
         </Link>
@@ -44,8 +44,7 @@ export const Navbar = () => {
       </div>
       <div className="flex items-center gap-2">
         <ModeToggle />
-        <div className="mx-1 h-4 w-px bg-border" />
-        <Button variant="outline" size="lg" onClick={handleAuthAction}>
+        <Button variant="outline" size="sm" onClick={handleAuthAction}>
           {session ? "Log out" : "Log in"}
         </Button>
       </div>

@@ -49,48 +49,38 @@ export const HeroSection = () => {
   }
 
   return (
-    <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 pt-24 pb-16 text-center">
-      <div className="pointer-events-none absolute top-0 left-1/2 h-100 w-150 -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
-
-      <Badge variant="outline" className="relative mb-6 gap-1.5">
-        <Sparkles className="size-3 text-primary" />
+    <section className="mx-auto flex max-w-3xl flex-col items-center px-6 pt-28 pb-20 text-center">
+      <Badge variant="outline" className="mb-6 gap-1.5 font-normal">
+        <Sparkles className="size-3" />
         Powered by Sappy's visual LLM
       </Badge>
 
-      <h1 className="relative mb-6 max-w-4xl font-bold text-5xl leading-tight tracking-tight md:text-7xl">
-        Design logic at the <br />
-        <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          speed of thought.
-        </span>
+      <h1 className="mb-5 max-w-2xl font-semibold text-4xl tracking-tight md:text-5xl">
+        Design logic at the speed of thought.
       </h1>
-      <p className="relative mb-10 max-w-2xl text-lg text-muted-foreground">
-        Generate high-fidelity, production-ready UI components and layouts from
-        a single sentence. Powered by Sappy's advanced visual LLM.
+      <p className="mb-10 max-w-xl text-base text-muted-foreground leading-relaxed">
+        Generate production-ready UI components and layouts from a single
+        sentence.
       </p>
 
       <form
         onSubmit={submitPrompt}
-        className="relative flex w-full max-w-3xl items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-primary/5"
+        className="flex w-full max-w-2xl items-center gap-2 rounded-lg border border-border bg-card p-1.5"
       >
-        <Sparkles className="ml-2 size-5 shrink-0 text-muted-foreground" />
+        <Sparkles className="ml-2 size-4 shrink-0 text-muted-foreground" />
         <Input
           type="text"
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="Describe your app idea..."
-          className="h-10 flex-1 border-none bg-transparent shadow-none focus-visible:ring-0"
+          className="h-9 flex-1 border-none bg-transparent shadow-none focus-visible:ring-0"
         />
-        <Button
-          type="submit"
-          size="lg"
-          className="h-10 px-5 font-semibold"
-          disabled={!prompt.trim()}
-        >
+        <Button type="submit" disabled={!prompt.trim()}>
           Generate <ArrowRight className="size-4" />
         </Button>
       </form>
 
-      <div className="relative mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
         <span className="text-muted-foreground">Try:</span>
         {suggestions.map((suggestion) => (
           <Button

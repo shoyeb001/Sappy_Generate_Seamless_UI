@@ -12,12 +12,10 @@ export const Footer = () => (
     <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
       <div className="text-center md:text-left">
         <div className="mb-1 flex items-center justify-center gap-2 md:justify-start">
-          <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Sparkles className="size-3.5" />
+          <span className="flex size-5 items-center justify-center rounded-md bg-foreground text-background">
+            <Sparkles className="size-3" />
           </span>
-          <span className="font-semibold text-foreground text-lg">
-            Sappy AI
-          </span>
+          <span className="font-semibold text-foreground">Sappy AI</span>
         </div>
         <p className="text-muted-foreground text-xs">
           © {new Date().getFullYear()} Sappy AI. Code for the future of design.

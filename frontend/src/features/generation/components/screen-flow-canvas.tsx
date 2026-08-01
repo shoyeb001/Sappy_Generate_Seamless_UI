@@ -214,7 +214,7 @@ export function ScreenFlowCanvas({
   }, [plannedNodes, selectedScreenId, setNodes])
 
   return (
-    <div className="h-[calc(100vh-9rem)] min-h-160 overflow-hidden rounded-2xl border border-border bg-muted/30">
+    <div className="h-[calc(100vh-9rem)] min-h-160 overflow-hidden rounded-lg border border-border bg-muted/30">
       <ReactFlow
         nodes={nodes}
         edges={[]}

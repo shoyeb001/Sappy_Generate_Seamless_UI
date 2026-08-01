@@ -33,9 +33,9 @@ export const ProjectSidebar = ({
   const steps = buildSteps(project.events, project.status)
 
   return (
-    <aside className="h-fit rounded-2xl border border-border bg-card p-5">
+    <aside className="h-fit rounded-lg border border-border bg-card p-5">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className="flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground">
           <Sparkles className="size-5" />
         </div>
         <div>
@@ -46,7 +46,7 @@ export const ProjectSidebar = ({
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+      <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
         <p className="text-muted-foreground text-xs uppercase tracking-widest">
           Prompt
         </p>
@@ -58,7 +58,7 @@ export const ProjectSidebar = ({
       <StepList steps={steps} />
 
       {project.project ? (
-        <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+        <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
           <p className="text-muted-foreground text-xs uppercase tracking-widest">
             Project
           </p>
@@ -90,7 +90,7 @@ export const ProjectSidebar = ({
         streamError={editStreamError}
       />
 
-      <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+      <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
         <p className="text-muted-foreground text-xs uppercase tracking-widest">
           Selected frame
         </p>

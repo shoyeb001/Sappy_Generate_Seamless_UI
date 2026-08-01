@@ -31,7 +31,7 @@ export const EditFramePanel = ({
     isApplying
 
   return (
-    <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+    <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-muted-foreground text-xs uppercase tracking-widest">
           Edit frame

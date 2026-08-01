@@ -62,11 +62,11 @@ export const SettingsPage = () => {
 
   return (
     <section className="mx-auto flex min-h-[80vh] max-w-2xl flex-col justify-center px-6 py-16">
-      <Badge variant="outline" className="mb-5 w-fit gap-2">
-        <KeyRound className="size-3 text-primary" />
+      <Badge variant="outline" className="mb-5 w-fit gap-2 font-normal">
+        <KeyRound className="size-3" />
         Provider settings
       </Badge>
-      <h1 className="font-bold text-4xl text-foreground">
+      <h1 className="font-semibold text-2xl text-foreground tracking-tight">
         Connect your AI keys
       </h1>
       <p className="mt-3 max-w-lg text-muted-foreground text-sm leading-6">
@@ -75,8 +75,8 @@ export const SettingsPage = () => {
       </p>
 
       {isRequired ? (
-        <Alert className="mt-6 border-primary/30">
-          <TriangleAlert className="text-primary" />
+        <Alert className="mt-6">
+          <TriangleAlert />
           <AlertDescription>
             Add both provider keys before generating UI. The generation API is
             disabled for accounts without these settings.
@@ -147,7 +147,7 @@ export const SettingsPage = () => {
             </div>
 
             {message ? (
-              <Alert className="border-primary/30">
+              <Alert>
                 <AlertDescription className="text-foreground">
                   {message}
                 </AlertDescription>

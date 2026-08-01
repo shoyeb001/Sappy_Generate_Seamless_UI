@@ -1,11 +1,10 @@
-import { Card, CardContent, CardFooter } from "~/shared/components/ui/card"
+import type { ReactNode } from "react"
 
-interface WorkflowCardProps {
+type WorkflowCardProps = {
   step: string
   title: string
   description: string
-  icon: React.ReactNode
-  footer: React.ReactNode
+  icon: ReactNode
 }
 
 export const WorkflowCard = ({
@@ -13,24 +12,17 @@ export const WorkflowCard = ({
   title,
   description,
   icon,
-  footer,
 }: WorkflowCardProps) => (
-  <Card className="group relative h-full transition-colors hover:ring-primary/30">
-    <span className="pointer-events-none absolute top-2 right-6 z-0 select-none font-bold text-[120px] text-muted/40 leading-none">
-      {step}
-    </span>
-
-    <CardContent className="relative z-10 flex-1">
-      <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+  <div className="bg-card p-6">
+    <div className="flex items-center gap-3">
+      <span className="flex size-8 items-center justify-center rounded-md border border-border text-muted-foreground">
         {icon}
-      </div>
-      <h3 className="mb-3 font-semibold text-foreground text-xl">{title}</h3>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        {description}
-      </p>
-    </CardContent>
-    <CardFooter className="relative z-10 mt-auto bg-transparent">
-      {footer}
-    </CardFooter>
-  </Card>
+      </span>
+      <span className="text-muted-foreground text-xs tabular-nums">{step}</span>
+    </div>
+    <h3 className="mt-4 font-medium text-foreground">{title}</h3>
+    <p className="mt-1.5 text-muted-foreground text-sm leading-relaxed">
+      {description}
+    </p>
+  </div>
 )
