@@ -14,17 +14,20 @@ import {
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "~/components/ui/alert"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
+import { Textarea } from "~/components/ui/textarea"
 import {
   useStartGenerationStreamMutation,
   useStartScreenEditStreamMutation,
-} from "@/store/generation-api"
+} from "~/store/generation-api"
 import type {
   GeneratedScreen,
   GenerationStatus,
-} from "@/store/generation-types"
-import { getLLMCredentialsStatus } from "@/store/settings-api"
-import { useAppSelector } from "@/store/store"
+} from "~/store/generation-types"
+import { getLLMCredentialsStatus } from "~/store/settings-api"
+import { useAppSelector } from "~/store/store"
 import { ScreenFlowCanvas } from "./components/screen-flow-canvas"
 
 const statusCopy: Record<GenerationStatus, string> = {
@@ -41,18 +44,18 @@ type StepState = "pending" | "active" | "complete" | "failed"
 
 function StepIcon({ state }: { state: StepState }) {
   if (state === "complete") {
-    return <CheckCircle2 className="size-5 text-emerald-400" />
+    return <CheckCircle2 className="size-5 text-primary" />
   }
 
   if (state === "failed") {
-    return <XCircle className="size-5 text-red-400" />
+    return <XCircle className="size-5 text-destructive" />
   }
 
   if (state === "active") {
-    return <Loader2 className="size-5 animate-spin text-cyan-300" />
+    return <Loader2 className="size-5 animate-spin text-primary" />
   }
 
-  return <Circle className="size-5 text-slate-600" />
+  return <Circle className="size-5 text-muted-foreground" />
 }
 
 function hasEvent(events: string[], eventName: string) {
@@ -383,44 +386,45 @@ export default function ProjectPage() {
   if (!projectId || !project) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-6 text-center">
-        <Badge className="mb-5">No active prompt</Badge>
-        <h1 className="font-bold text-4xl text-white">
+        <Badge variant="outline" className="mb-5">
+          No active prompt
+        </Badge>
+        <h1 className="font-bold text-4xl text-foreground">
           Start from the landing page
         </h1>
-        <p className="mt-4 text-slate-400">
+        <p className="mt-4 text-muted-foreground">
           This project route needs a prompt from the generator form.
         </p>
-        <Link
-          to="/"
-          className="mt-8 inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/80"
-        >
-          Create a UI
-        </Link>
+        <Button
+          size="lg"
+          className="mt-8 h-10 px-5"
+          render={<Link to="/">Create a UI</Link>}
+        />
       </section>
     )
   }
 
   return (
-    <section className="min-h-screen px-4 py-10 text-slate-100">
+    <section className="min-h-screen px-4 py-10">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[360px_1fr]">
-        <aside className="h-fit rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+        <aside className="h-fit rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Sparkles className="size-5" />
             </div>
             <div>
-              <p className="text-slate-400 text-sm">Design status</p>
-              <h1 className="font-semibold text-white">
+              <p className="text-muted-foreground text-sm">Design status</p>
+              <h1 className="font-semibold text-foreground">
                 {statusCopy[project.status]}
               </h1>
             </div>
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-slate-500 text-xs uppercase tracking-widest">
+          <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+            <p className="text-muted-foreground text-xs uppercase tracking-widest">
               Prompt
             </p>
-            <p className="mt-2 text-slate-300 text-sm leading-6">
+            <p className="mt-2 text-foreground text-sm leading-6">
               {project.prompt}
             </p>
           </div>
@@ -429,71 +433,74 @@ export default function ProjectPage() {
             {steps.map((step) => (
               <div key={step.label} className="flex items-center gap-3">
                 <StepIcon state={step.state} />
-                <span className="text-slate-300 text-sm">{step.label}</span>
+                <span className="text-foreground text-sm">{step.label}</span>
               </div>
             ))}
           </div>
 
           {project.project ? (
-            <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-              <p className="text-slate-500 text-xs uppercase tracking-widest">
+            <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+              <p className="text-muted-foreground text-xs uppercase tracking-widest">
                 Project
               </p>
-              <h2 className="mt-2 font-semibold text-lg text-white">
+              <h2 className="mt-2 font-semibold text-foreground text-lg">
                 {project.project.name}
               </h2>
-              <p className="mt-1 text-slate-400 text-sm">
+              <p className="mt-1 text-muted-foreground text-sm">
                 {project.project.type}
               </p>
             </div>
           ) : null}
 
           {project.error || streamState.error ? (
-            <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200 text-sm">
-              {project.error ?? "Unable to connect to the generation stream."}
-            </div>
+            <Alert variant="destructive" className="mt-6">
+              <AlertDescription>
+                {project.error ?? "Unable to connect to the generation stream."}
+              </AlertDescription>
+            </Alert>
           ) : null}
 
-          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+          <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-slate-500 text-xs uppercase tracking-widest">
+              <p className="text-muted-foreground text-xs uppercase tracking-widest">
                 Edit frame
               </p>
               {project.edit.status === "understanding" ||
               project.edit.status === "regenerating" ? (
-                <Loader2 className="size-4 animate-spin text-cyan-300" />
+                <Loader2 className="size-4 animate-spin text-primary" />
               ) : null}
             </div>
 
             <div className="mt-3 min-h-8">
               {selectedScreen ? (
-                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 font-medium text-cyan-100 text-xs">
+                <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 font-medium text-primary text-xs">
                   <span className="truncate">{selectedScreen.name}</span>
                   <button
                     type="button"
                     onClick={handleClearSelectedScreen}
-                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-cyan-100 transition hover:bg-cyan-300/20"
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition hover:bg-primary/20"
                     aria-label="Remove selected frame"
                   >
                     <X className="size-3.5" />
                   </button>
                 </span>
               ) : (
-                <p className="text-slate-400 text-sm leading-6">
+                <p className="text-muted-foreground text-sm leading-6">
                   Select one completed frame to edit it.
                 </p>
               )}
             </div>
 
-            <textarea
+            <Textarea
               value={editInstruction}
               onChange={(event) => setEditInstruction(event.target.value)}
               placeholder="Describe the change for the selected frame..."
-              className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-slate-100 text-sm leading-6 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
+              className="mt-4 min-h-28"
             />
 
-            <button
+            <Button
               type="button"
+              size="lg"
               onClick={() => void handleEditSelectedScreen()}
               disabled={
                 !selectedScreen ||
@@ -502,7 +509,7 @@ export default function ProjectPage() {
                 project.edit.status === "regenerating" ||
                 editStreamState.isLoading
               }
-              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-cyan-300 px-3 font-semibold text-slate-950 text-sm transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+              className="mt-3 h-9 w-full"
             >
               {project.edit.status === "understanding" ||
               project.edit.status === "regenerating" ||
@@ -512,10 +519,10 @@ export default function ProjectPage() {
                 <WandSparkles className="size-4" />
               )}
               Apply edit
-            </button>
+            </Button>
 
             {project.edit.status !== "idle" ? (
-              <p className="mt-3 text-slate-400 text-sm">
+              <p className="mt-3 text-muted-foreground text-sm">
                 {project.edit.status === "understanding"
                   ? "Understanding the edit..."
                   : project.edit.status === "regenerating"
@@ -527,67 +534,71 @@ export default function ProjectPage() {
             ) : null}
 
             {project.edit.decision ? (
-              <p className="mt-2 text-slate-500 text-xs leading-5">
+              <p className="mt-2 text-muted-foreground text-xs leading-5">
                 {project.edit.decision.summary}
               </p>
             ) : null}
 
             {project.edit.error || editStreamState.error ? (
-              <p className="mt-3 text-red-300 text-sm">
+              <p className="mt-3 text-destructive text-sm">
                 {project.edit.error ?? "Unable to connect to the edit stream."}
               </p>
             ) : null}
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-slate-500 text-xs uppercase tracking-widest">
+          <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4">
+            <p className="text-muted-foreground text-xs uppercase tracking-widest">
               Selected frame
             </p>
             {selectedScreen ? (
               <>
-                <h2 className="mt-2 truncate font-semibold text-lg text-white">
+                <h2 className="mt-2 truncate font-semibold text-foreground text-lg">
                   {selectedScreen.name}
                 </h2>
-                <p className="mt-1 text-slate-400 text-sm">
+                <p className="mt-1 text-muted-foreground text-sm">
                   {selectedScreen.width} x {selectedScreen.height}
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleCopyHtml}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="h-9"
                   >
                     <Clipboard className="size-3.5" />
                     HTML
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => void handleExportImage("png")}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="h-9"
                   >
                     <FileImage className="size-3.5" />
                     PNG
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => void handleExportImage("jpg")}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 font-medium text-slate-100 text-xs transition hover:border-cyan-300 hover:text-cyan-100"
+                    className="h-9"
                   >
                     <Download className="size-3.5" />
                     JPG
-                  </button>
+                  </Button>
                 </div>
                 {exportStatus ? (
-                  <p className="mt-3 text-emerald-300 text-sm">
-                    {exportStatus}
-                  </p>
+                  <p className="mt-3 text-primary text-sm">{exportStatus}</p>
                 ) : null}
                 {exportError ? (
-                  <p className="mt-3 text-red-300 text-sm">{exportError}</p>
+                  <p className="mt-3 text-destructive text-sm">{exportError}</p>
                 ) : null}
               </>
             ) : (
-              <p className="mt-2 text-slate-400 text-sm leading-6">
+              <p className="mt-2 text-muted-foreground text-sm leading-6">
                 Select a completed frame on the canvas to copy or export it.
               </p>
             )}
@@ -597,13 +608,13 @@ export default function ProjectPage() {
         <div className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-slate-400 text-sm">UI frames</p>
-              <h2 className="font-semibold text-2xl text-white">
+              <p className="text-muted-foreground text-sm">UI frames</p>
+              <h2 className="font-semibold text-2xl text-foreground">
                 {project.generatedScreens.length} of{" "}
                 {project.screens.length || "..."} ready
               </h2>
             </div>
-            <Badge className="gap-1">
+            <Badge variant="outline" className="gap-1">
               <Monitor className="size-3" />
               Design stream
             </Badge>

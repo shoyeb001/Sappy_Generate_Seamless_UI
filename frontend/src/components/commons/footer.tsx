@@ -1,34 +1,60 @@
-import { Globe, Share2 } from "lucide-react"
+import { GitFork, Globe, MessageCircle, Sparkles } from "lucide-react"
+
+const footerLinks = [
+  "Privacy Policy",
+  "Terms of Service",
+  "Changelog",
+  "Community",
+]
 
 export const Footer = () => (
-  <footer className="mt-12 border-slate-800/60 border-t bg-[#0B0F19] px-6 py-8">
+  <footer className="mt-12 border-border/60 border-t bg-background px-6 py-8">
     <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
-      <div>
-        <div className="mb-1 font-bold text-white text-xl">Aether UI</div>
-        <p className="text-slate-500 text-xs">
-          © 2024 Aether AI. Code for the future of design. All rights reserved.
+      <div className="text-center md:text-left">
+        <div className="mb-1 flex items-center justify-center gap-2 md:justify-start">
+          <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Sparkles className="size-3.5" />
+          </span>
+          <span className="font-semibold text-foreground text-lg">
+            Sappy AI
+          </span>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          © 2024 Sappy AI. Code for the future of design. All rights reserved.
         </p>
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-6 font-medium text-slate-400 text-sm">
-        <a href="#" className="transition hover:text-white">
-          Privacy Policy
-        </a>
-        <a href="#" className="transition hover:text-white">
-          Terms of Service
-        </a>
-        <a href="#" className="transition hover:text-white">
-          Changelog
-        </a>
-        <a href="#" className="transition hover:text-white">
-          Community
-        </a>
+      <div className="flex flex-wrap items-center justify-center gap-6 font-medium text-muted-foreground text-sm">
+        {footerLinks.map((label) => (
+          <button
+            key={label}
+            type="button"
+            className="transition-colors hover:text-foreground"
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      <div className="flex items-center gap-4 text-slate-400">
-        <button className="transition hover:text-white">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <button
+          type="button"
+          aria-label="Website"
+          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+        >
           <Globe size={18} />
         </button>
-        <button className="transition hover:text-white">
-          <Share2 size={18} />
+        <button
+          type="button"
+          aria-label="Community"
+          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <MessageCircle size={18} />
+        </button>
+        <button
+          type="button"
+          aria-label="Source"
+          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <GitFork size={18} />
         </button>
       </div>
     </div>

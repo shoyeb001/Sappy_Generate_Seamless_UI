@@ -99,7 +99,8 @@ export function ThemeProvider({
   React.useEffect(() => {
     const applyTheme = (nextTheme: Theme) => {
       const root = document.documentElement
-      const resolvedTheme = nextTheme === "system" ? getSystemTheme() : nextTheme
+      const resolvedTheme =
+        nextTheme === "system" ? getSystemTheme() : nextTheme
       const restoreTransitions = disableTransitionOnChange
         ? disableTransitionsTemporarily()
         : null
@@ -200,9 +201,7 @@ export function ThemeProvider({
     setTheme,
   }
 
-  return (
-    <ThemeProviderContext value={value}>{children}</ThemeProviderContext>
-  )
+  return <ThemeProviderContext value={value}>{children}</ThemeProviderContext>
 }
 
 export const useTheme = () => {

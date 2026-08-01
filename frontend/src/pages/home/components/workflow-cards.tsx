@@ -1,3 +1,5 @@
+import { Card, CardContent, CardFooter } from "~/components/ui/card"
+
 interface WorkflowCardProps {
   step: string
   title: string
@@ -13,23 +15,22 @@ export const WorkflowCard = ({
   icon,
   footer,
 }: WorkflowCardProps) => (
-  <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-900/40 p-6 transition-colors hover:border-slate-700">
-    {/* Large Background Number */}
-    <div className="absolute top-2 right-6 z-0 select-none font-bold text-[120px] text-slate-800/20 leading-none">
+  <Card className="group relative h-full transition-colors hover:ring-primary/30">
+    <span className="pointer-events-none absolute top-2 right-6 z-0 select-none font-bold text-[120px] text-muted/40 leading-none">
       {step}
-    </div>
+    </span>
 
-    <div className="relative z-10 flex-1">
-      <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-slate-800 text-cyan-400">
+    <CardContent className="relative z-10 flex-1">
+      <div className="mb-6 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
         {icon}
       </div>
-      <h3 className="mb-3 font-semibold text-white text-xl">{title}</h3>
-      <p className="mb-8 text-slate-400 text-sm leading-relaxed">
+      <h3 className="mb-3 font-semibold text-foreground text-xl">{title}</h3>
+      <p className="text-muted-foreground text-sm leading-relaxed">
         {description}
       </p>
-    </div>
-    <div className="relative z-10 mt-auto border-slate-800/50 border-t pt-4">
+    </CardContent>
+    <CardFooter className="relative z-10 mt-auto bg-transparent">
       {footer}
-    </div>
-  </div>
+    </CardFooter>
+  </Card>
 )

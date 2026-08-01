@@ -9,7 +9,7 @@ import {
   ReactFlow,
   useNodesState,
 } from "@xyflow/react"
-import type { GeneratedScreen, ScreenPlan } from "@/store/generation-types"
+import type { GeneratedScreen, ScreenPlan } from "~/store/generation-types"
 import "@xyflow/react/dist/style.css"
 import { Frame, Loader2 } from "lucide-react"
 import { useEffect } from "react"
@@ -93,7 +93,7 @@ function ScreenNode({
         ) : (
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0b1220]">
             <div className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.08),transparent)]" />
-            <div className="relative grid h-[178px] w-[284px] grid-cols-[72px_1fr] gap-3 rounded-sm border border-white/10 bg-slate-950/70 p-3">
+            <div className="relative grid h-44.5 w-71 grid-cols-[72px_1fr] gap-3 rounded-sm border border-white/10 bg-slate-950/70 p-3">
               <div className="space-y-2 border-white/10 border-r pr-3">
                 <div className="h-4 rounded-sm bg-cyan-300/45" />
                 <div className="h-3 rounded-sm bg-white/16" />
@@ -214,7 +214,7 @@ export function ScreenFlowCanvas({
   }, [plannedNodes, selectedScreenId, setNodes])
 
   return (
-    <div className="h-[calc(100vh-9rem)] min-h-[640px] overflow-hidden rounded-2xl border border-slate-800 bg-[#111318]">
+    <div className="h-[calc(100vh-9rem)] min-h-160 overflow-hidden rounded-2xl border border-border bg-muted/30">
       <ReactFlow
         nodes={nodes}
         edges={[]}
@@ -228,8 +228,8 @@ export function ScreenFlowCanvas({
         maxZoom={1.2}
         nodesDraggable
       >
-        <Background color="#3f4652" gap={24} size={1.25} />
-        <Controls className="border border-slate-800 bg-slate-900 text-slate-100" />
+        <Background color="var(--border)" gap={24} size={1.25} />
+        <Controls className="border border-border bg-card text-foreground [&_button:hover]:bg-muted [&_button]:border-border [&_button]:bg-card [&_button_svg]:fill-foreground" />
       </ReactFlow>
     </div>
   )

@@ -1,9 +1,18 @@
 import { LockKeyhole, Mail, Sparkles } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { useLoginMutation, useSignupMutation } from "@/store/auth-api"
+import { Alert, AlertDescription } from "~/components/ui/alert"
+import { Button } from "~/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card"
+import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
+import { useLoginMutation, useSignupMutation } from "~/store/auth-api"
 
 type AuthMode = "login" | "signup"
 
@@ -73,86 +82,94 @@ export default function AuthPage() {
   }
 
   return (
-    <section className="mx-auto flex min-h-[72vh] max-w-md flex-col justify-center px-6 py-16 text-slate-100">
-      <Badge className="mb-5 w-fit gap-2">
-        <Sparkles className="size-3" />
-        Aether account
-      </Badge>
-      <h1 className="font-bold text-4xl text-white">
-        {mode === "login" ? "Log in to generate UI" : "Create your account"}
-      </h1>
-      <p className="mt-3 text-slate-400 text-sm leading-6">
-        Email and password only. No verification code is required.
-      </p>
+    <section className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-6 py-16">
+      <div className="mb-6 flex items-center gap-2">
+        <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Sparkles className="size-4" />
+        </span>
+        <span className="font-medium text-muted-foreground text-sm">
+          Sappy account
+        </span>
+      </div>
 
-      <form
-        onSubmit={(event) => void handleSubmit(event)}
-        className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/70 p-5"
-      >
-        <label
-          className="block font-medium text-slate-300 text-sm"
-          htmlFor="email"
-        >
-          Email
-        </label>
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3">
-          <Mail className="size-4 text-slate-500" />
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
-            placeholder="you@example.com"
-          />
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">
+            {mode === "login" ? "Log in to generate UI" : "Create your account"}
+          </CardTitle>
+          <CardDescription>
+            Email and password only. No verification code is required.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(event) => void handleSubmit(event)}
+            className="grid gap-5"
+          >
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="h-10 pl-8"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
 
-        <label
-          className="mt-5 block font-medium text-slate-300 text-sm"
-          htmlFor="password"
-        >
-          Password
-        </label>
-        <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3">
-          <LockKeyhole className="size-4 text-slate-500" />
-          <input
-            id="password"
-            type="password"
-            autoComplete={
-              mode === "login" ? "current-password" : "new-password"
-            }
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="h-11 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
-            placeholder="At least 6 characters"
-          />
-        </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <LockKeyhole className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete={
+                    mode === "login" ? "current-password" : "new-password"
+                  }
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="h-10 pl-8"
+                  placeholder="At least 6 characters"
+                />
+              </div>
+            </div>
 
-        {error ? (
-          <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-200 text-sm">
-            {getErrorMessage(error)}
-          </p>
-        ) : null}
+            {error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{getErrorMessage(error)}</AlertDescription>
+              </Alert>
+            ) : null}
 
-        <Button
-          type="submit"
-          className="mt-6 h-10 w-full rounded-xl"
-          disabled={!email.trim() || password.length < 6 || isLoading}
-        >
-          {isLoading ? "Please wait..." : submitLabel}
-        </Button>
-      </form>
+            <Button
+              type="submit"
+              size="lg"
+              className="h-10 w-full"
+              disabled={!email.trim() || password.length < 6 || isLoading}
+            >
+              {isLoading ? "Please wait..." : submitLabel}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div className="mt-5 flex items-center justify-between text-sm">
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          className="text-cyan-300 transition hover:text-cyan-100"
+          className="font-medium text-primary transition-colors hover:text-primary/80"
         >
           {mode === "login" ? "Create an account" : "Already have an account?"}
         </button>
-        <Link to="/" className="text-slate-400 transition hover:text-white">
+        <Link
+          to="/"
+          className="text-muted-foreground transition-colors hover:text-foreground"
+        >
           Back home
         </Link>
       </div>

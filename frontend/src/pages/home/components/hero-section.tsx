@@ -1,9 +1,11 @@
-import { Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { useNavigate } from "react-router"
-import { Button } from "@/components/ui/button"
-import { startProject } from "@/store/generation-slice"
-import { useAppDispatch, useAppSelector } from "@/store/store"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
+import { startProject } from "~/store/generation-slice"
+import { useAppDispatch, useAppSelector } from "~/store/store"
 
 function createProjectId() {
   if (window.crypto.randomUUID) {
@@ -12,6 +14,11 @@ function createProjectId() {
 
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
+
+const suggestions = [
+  "A one page portfolio website with intro, projects and contact section",
+  "Minimalist task manager for iOS",
+]
 
 export const HeroSection = () => {
   const [prompt, setPrompt] = useState("")
@@ -42,59 +49,61 @@ export const HeroSection = () => {
   }
 
   return (
-    <section className="flex flex-col items-center justify-center px-4 pt-24 pb-16 text-center">
-      {/* <Badge className="mb-6 tracking-widest uppercase text-[10px]">Aether v2.0 Preview</Badge> */}
-      <h1 className="mb-6 max-w-4xl font-bold text-5xl text-white leading-tight tracking-tight md:text-7xl">
+    <section className="relative flex flex-col items-center justify-center overflow-hidden px-4 pt-24 pb-16 text-center">
+      <div className="pointer-events-none absolute top-0 left-1/2 h-100 w-150 -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
+
+      <Badge variant="outline" className="relative mb-6 gap-1.5">
+        <Sparkles className="size-3 text-primary" />
+        Powered by Sappy's visual LLM
+      </Badge>
+
+      <h1 className="relative mb-6 max-w-4xl font-bold text-5xl leading-tight tracking-tight md:text-7xl">
         Design logic at the <br />
-        <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+        <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           speed of thought.
         </span>
       </h1>
-      <p className="mb-10 max-w-2xl text-lg text-slate-400">
+      <p className="relative mb-10 max-w-2xl text-lg text-muted-foreground">
         Generate high-fidelity, production-ready UI components and layouts from
-        a single sentence. Powered by Aether's advanced visual LLM.
+        a single sentence. Powered by Sappy's advanced visual LLM.
       </p>
 
       <form
         onSubmit={submitPrompt}
-        className="flex w-full max-w-3xl items-center rounded-2xl border border-slate-700/50 bg-slate-900/50 p-2 shadow-[0_0_30px_-5px_rgba(34,211,238,0.15)] backdrop-blur-sm"
+        className="relative flex w-full max-w-3xl items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-primary/5"
       >
-        <Sparkles className="mr-2 ml-3 text-slate-400" size={20} />
-        <input
+        <Sparkles className="ml-2 size-5 shrink-0 text-muted-foreground" />
+        <Input
           type="text"
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="Describe your app idea..."
-          className="flex-1 border-none bg-transparent px-2 text-slate-200 outline-none placeholder:text-slate-500"
+          className="h-10 flex-1 border-none bg-transparent shadow-none focus-visible:ring-0"
         />
         <Button
           type="submit"
-          className="rounded-xl px-6 font-semibold shadow-cyan-500/25"
+          size="lg"
+          className="h-10 px-5 font-semibold"
           disabled={!prompt.trim()}
         >
-          Generate <Sparkles size={16} className="ml-2" />
+          Generate <ArrowRight className="size-4" />
         </Button>
       </form>
 
-      <div className="mt-6 flex items-center gap-3 text-sm">
-        <span className="text-slate-500">Try:</span>
-        <button
-          type="button"
-          onClick={() =>
-            applySuggestion("A crypto dashboard with dark mode accents")
-          }
-          className="rounded-full border border-slate-700/50 bg-slate-800/50 px-3 py-1 text-slate-300 transition-colors hover:bg-slate-800"
-        >
-          "Create a one page protfolio website with intro, projects and contact
-          section"
-        </button>
-        <button
-          type="button"
-          onClick={() => applySuggestion("Minimalist task manager for iOS")}
-          className="hidden rounded-full border border-slate-700/50 bg-slate-800/50 px-3 py-1 text-slate-300 transition-colors hover:bg-slate-800 sm:block"
-        >
-          "Minimalist task manager for iOS"
-        </button>
+      <div className="relative mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+        <span className="text-muted-foreground">Try:</span>
+        {suggestions.map((suggestion) => (
+          <Button
+            key={suggestion}
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => applySuggestion(suggestion)}
+            className="rounded-full font-normal text-muted-foreground"
+          >
+            {suggestion}
+          </Button>
+        ))}
       </div>
     </section>
   )
