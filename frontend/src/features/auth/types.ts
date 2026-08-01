@@ -1,22 +1,30 @@
-export type AuthUser = {
-  id: string
-  email: string | null
-}
+import { z } from "zod"
 
-export type AuthSession = {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  expires_in: number
-  expires_at: number | null
-  user: AuthUser
-}
+export const authUserSchema = z.object({
+  id: z.string(),
+  email: z.string().nullable(),
+})
 
-export type StoredAuthSession = AuthSession & {
-  saved_at: number
-}
+export const authSessionSchema = z.object({
+  access_token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+  expires_at: z.number().nullable(),
+  user: authUserSchema,
+})
 
-export type AuthCredentials = {
-  email: string
-  password: string
-}
+export const storedAuthSessionSchema = authSessionSchema.extend({
+  saved_at: z.number(),
+})
+
+export type AuthUser = z.infer<typeof authUserSchema>
+export type AuthSession = z.infer<typeof authSessionSchema>
+export type StoredAuthSession = z.infer<typeof storedAuthSessionSchema>
+
+export const authCredentialsSchema = z.object({
+  email: z.email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+})
+
+export type AuthCredentials = z.infer<typeof authCredentialsSchema>

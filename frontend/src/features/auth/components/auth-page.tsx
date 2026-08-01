@@ -1,7 +1,13 @@
+import { zodResolver } from "@hookform/resolvers/zod"
 import { LockKeyhole, Mail, Sparkles } from "lucide-react"
-import { type FormEvent, useState } from "react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import { useLoginMutation, useSignupMutation } from "~/features/auth/api"
+import {
+  type AuthCredentials,
+  authCredentialsSchema,
+} from "~/features/auth/types"
 import { Alert, AlertDescription } from "~/shared/components/ui/alert"
 import { Button } from "~/shared/components/ui/button"
 import {
@@ -11,8 +17,13 @@ import {
   CardHeader,
   CardTitle,
 } from "~/shared/components/ui/card"
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "~/shared/components/ui/field"
 import { Input } from "~/shared/components/ui/input"
-import { Label } from "~/shared/components/ui/label"
 import { parseError } from "~/shared/lib/parse-error"
 
 type AuthMode = "login" | "signup"
@@ -21,41 +32,41 @@ export const AuthPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [mode, setMode] = useState<AuthMode>("login")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [login, loginState] = useLoginMutation()
   const [signup, signupState] = useSignupMutation()
 
-  const isLoading = loginState.isLoading || signupState.isLoading
-  const error = loginState.error ?? signupState.error
+  const form = useForm<AuthCredentials>({
+    resolver: zodResolver(authCredentialsSchema),
+    defaultValues: { email: "", password: "" },
+    mode: "onTouched",
+  })
+  const { errors, isSubmitting } = form.formState
+
+  const serverError = loginState.error ?? signupState.error
   const submitLabel = mode === "login" ? "Log in" : "Create account"
 
   const nextPathParam = searchParams.get("next")
   const nextPath = nextPathParam?.startsWith("/") ? nextPathParam : "/"
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    const credentials = {
-      email: email.trim(),
-      password,
-    }
-
-    if (!credentials.email || credentials.password.length < 6) {
-      return
-    }
-
+  const onSubmit = async (values: AuthCredentials) => {
     try {
       if (mode === "login") {
-        await login(credentials).unwrap()
+        await login(values).unwrap()
       } else {
-        await signup(credentials).unwrap()
+        await signup(values).unwrap()
       }
 
       navigate(mode === "signup" ? "/settings?required=1" : nextPath)
     } catch {
       // RTK Query exposes the error through mutation state for rendering.
     }
+  }
+
+  const toggleMode = () => {
+    setMode((current) => (current === "login" ? "signup" : "login"))
+    form.reset()
+    loginState.reset()
+    signupState.reset()
   }
 
   return (
@@ -79,60 +90,61 @@ export const AuthPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={(event) => void handleSubmit(event)}
-            className="grid gap-5"
-          >
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="h-10 pl-8"
-                  placeholder="you@example.com"
-                />
-              </div>
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <Field data-invalid={!!errors.email}>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <div className="relative">
+                  <Mail className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    aria-invalid={!!errors.email}
+                    className="h-10 pl-8"
+                    {...form.register("email")}
+                  />
+                </div>
+                <FieldError errors={[errors.email]} />
+              </Field>
 
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <LockKeyhole className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="h-10 pl-8"
-                  placeholder="At least 6 characters"
-                />
-              </div>
-            </div>
+              <Field data-invalid={!!errors.password}>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <div className="relative">
+                  <LockKeyhole className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete={
+                      mode === "login" ? "current-password" : "new-password"
+                    }
+                    placeholder="At least 6 characters"
+                    aria-invalid={!!errors.password}
+                    className="h-10 pl-8"
+                    {...form.register("password")}
+                  />
+                </div>
+                <FieldError errors={[errors.password]} />
+              </Field>
 
-            {error ? (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  {parseError(error, "Authentication failed.")}
-                </AlertDescription>
-              </Alert>
-            ) : null}
+              {serverError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {parseError(serverError, "Authentication failed.")}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-            <Button
-              type="submit"
-              size="lg"
-              className="h-10 w-full"
-              disabled={!email.trim() || password.length < 6 || isLoading}
-            >
-              {isLoading ? "Please wait..." : submitLabel}
-            </Button>
+              <Button
+                type="submit"
+                size="lg"
+                className="h-10 w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Please wait..." : submitLabel}
+              </Button>
+            </FieldGroup>
           </form>
         </CardContent>
       </Card>
@@ -140,7 +152,7 @@ export const AuthPage = () => {
       <div className="mt-5 flex items-center justify-between text-sm">
         <button
           type="button"
-          onClick={() => setMode(mode === "login" ? "signup" : "login")}
+          onClick={toggleMode}
           className="font-medium text-primary transition-colors hover:text-primary/80"
         >
           {mode === "login" ? "Create an account" : "Already have an account?"}

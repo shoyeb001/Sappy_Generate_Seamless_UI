@@ -1,12 +1,12 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react"
 import { generationEventReceived } from "~/features/generation/slice"
-import type {
-  DesignSystem,
-  GeneratedScreen,
-  GenerationEvent,
-  GenerationEventType,
-  ProjectPlan,
-  ScreenPlan,
+import {
+  type DesignSystem,
+  type GeneratedScreen,
+  type GenerationEvent,
+  generationEventSchema,
+  type ProjectPlan,
+  type ScreenPlan,
 } from "~/features/generation/types"
 import { streamSse } from "~/shared/api/sse"
 
@@ -34,10 +34,11 @@ function toGenerationEvent(
   data: string
 ): GenerationEvent | null {
   try {
-    return {
-      type: event as GenerationEventType,
-      data: JSON.parse(data) as GenerationEvent["data"],
-    } as GenerationEvent
+    const parsed = generationEventSchema.safeParse({
+      type: event,
+      data: JSON.parse(data),
+    })
+    return parsed.success ? parsed.data : null
   } catch {
     return null
   }

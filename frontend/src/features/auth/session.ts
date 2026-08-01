@@ -1,4 +1,9 @@
-import type { AuthSession, StoredAuthSession } from "~/features/auth/types"
+import {
+  type AuthSession,
+  authSessionSchema,
+  type StoredAuthSession,
+  storedAuthSessionSchema,
+} from "~/features/auth/types"
 import { API_V1_URL } from "~/shared/api/config"
 
 const AUTH_STORAGE_KEY = "aether.auth.session"
@@ -11,7 +16,12 @@ export function getStoredAuthSession(): StoredAuthSession | null {
   }
 
   try {
-    return JSON.parse(rawSession) as StoredAuthSession
+    const parsed = storedAuthSessionSchema.safeParse(JSON.parse(rawSession))
+    if (!parsed.success) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      return null
+    }
+    return parsed.data
   } catch {
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
     return null
@@ -61,7 +71,13 @@ export async function refreshAuthSession(
     throw new Error(await response.text())
   }
 
-  return saveAuthSession((await response.json()) as AuthSession)
+  const parsed = authSessionSchema.safeParse(await response.json())
+  if (!parsed.success) {
+    clearAuthSession()
+    throw new Error("Received a malformed session from the server.")
+  }
+
+  return saveAuthSession(parsed.data)
 }
 
 export async function getValidAccessToken(signal?: AbortSignal) {

@@ -1,6 +1,10 @@
 import { createApi } from "@reduxjs/toolkit/query/react"
 import { authSessionReceived } from "~/features/auth/slice"
-import type { AuthCredentials, AuthSession } from "~/features/auth/types"
+import {
+  type AuthCredentials,
+  type AuthSession,
+  authSessionSchema,
+} from "~/features/auth/types"
 import { publicBaseQuery } from "~/shared/api/base-query"
 
 export const authApi = createApi({
@@ -13,6 +17,7 @@ export const authApi = createApi({
         method: "POST",
         body: credentials,
       }),
+      responseSchema: authSessionSchema,
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled
@@ -28,6 +33,7 @@ export const authApi = createApi({
         method: "POST",
         body: credentials,
       }),
+      responseSchema: authSessionSchema,
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled
