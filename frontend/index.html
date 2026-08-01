@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sappy AI — Design at the speed of thought</title>
+    <script>
+      (() => {
+        try {
+          const stored = localStorage.getItem("theme")
+          const theme = stored === "dark" || stored === "light" || stored === "system" ? stored : "system"
+          const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+          const resolved = theme === "system" ? (systemDark ? "dark" : "light") : theme
+          document.documentElement.classList.add(resolved)
+          document.documentElement.style.colorScheme = resolved
+        } catch {}
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
