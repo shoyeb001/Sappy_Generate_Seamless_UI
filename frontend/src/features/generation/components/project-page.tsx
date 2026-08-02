@@ -1,4 +1,3 @@
-import { Monitor } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import {
@@ -8,7 +7,6 @@ import {
 import { ProjectSidebar } from "~/features/generation/components/project-sidebar"
 import { ScreenFlowCanvas } from "~/features/generation/components/screen-flow-canvas"
 import { settingsApi } from "~/features/settings/api"
-import { Badge } from "~/shared/components/ui/badge"
 import { Button } from "~/shared/components/ui/button"
 import { useAppDispatch, useAppSelector } from "~/shared/hooks/use-app-store"
 
@@ -94,10 +92,8 @@ export const ProjectPage = () => {
   if (!projectId || !project) {
     return (
       <section className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-6 text-center">
-        <Badge variant="outline" className="mb-5">
-          No active prompt
-        </Badge>
-        <h1 className="font-bold text-4xl text-foreground">
+        <span className="readout mb-5 text-primary">no active prompt</span>
+        <h1 className="font-semibold text-4xl text-foreground tracking-tight">
           Start from the landing page
         </h1>
         <p className="mt-4 text-muted-foreground">
@@ -128,18 +124,15 @@ export const ProjectPage = () => {
         />
 
         <div className="min-w-0">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4 border-border border-b pb-4">
             <div>
-              <p className="text-muted-foreground text-sm">UI frames</p>
-              <h2 className="font-semibold text-2xl text-foreground">
+              <span className="readout text-primary">canvas · ui frames</span>
+              <h2 className="mt-2 font-semibold text-2xl text-foreground tracking-tight">
                 {project.generatedScreens.length} of{" "}
-                {project.screens.length || "..."} ready
+                {project.screens.length || "…"} ready
               </h2>
             </div>
-            <Badge variant="outline" className="gap-1">
-              <Monitor className="size-3" />
-              Design stream
-            </Badge>
+            <span className="readout">design stream</span>
           </div>
 
           <ScreenFlowCanvas

@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { LockKeyhole, Mail, Sparkles } from "lucide-react"
+import { LockKeyhole, Mail } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate, useSearchParams } from "react-router"
@@ -70,23 +70,27 @@ export const AuthPage = () => {
   }
 
   return (
-    <section className="mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-6 py-16">
-      <div className="mb-6 flex items-center gap-2">
-        <span className="flex size-6 items-center justify-center rounded-md bg-foreground text-background">
-          <Sparkles className="size-3.5" />
+    <section className="relative mx-auto flex min-h-[80vh] max-w-md flex-col justify-center px-6 py-16">
+      <div className="plotter-grid pointer-events-none absolute inset-0 opacity-40" />
+
+      <div className="relative mb-6 flex items-center gap-3">
+        <span className="font-semibold text-foreground tracking-tight">
+          Sappy
         </span>
-        <span className="font-medium text-muted-foreground text-sm">
-          Sappy account
+        <span className="readout text-primary">/account</span>
+        <span className="h-px flex-1 bg-border" />
+        <span className="readout">
+          {mode === "login" ? "auth 01" : "auth 02"}
         </span>
       </div>
 
-      <Card>
+      <Card className="crop-frame relative">
         <CardHeader>
           <CardTitle className="text-2xl">
-            {mode === "login" ? "Log in to generate UI" : "Create your account"}
+            {mode === "login" ? "Log in to draft UI" : "Create your account"}
           </CardTitle>
           <CardDescription>
-            Email and password only. No verification code is required.
+            Email and password only. No verification code required.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,7 +153,7 @@ export const AuthPage = () => {
         </CardContent>
       </Card>
 
-      <div className="mt-5 flex items-center justify-between text-sm">
+      <div className="relative mt-5 flex items-center justify-between text-sm">
         <button
           type="button"
           onClick={toggleMode}

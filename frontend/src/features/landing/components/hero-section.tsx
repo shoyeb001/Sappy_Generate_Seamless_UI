@@ -1,8 +1,7 @@
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { useNavigate } from "react-router"
 import { startProject } from "~/features/generation/slice"
-import { Badge } from "~/shared/components/ui/badge"
 import { Button } from "~/shared/components/ui/button"
 import { Input } from "~/shared/components/ui/input"
 import { useAppDispatch, useAppSelector } from "~/shared/hooks/use-app-store"
@@ -16,7 +15,7 @@ function createProjectId() {
 }
 
 const suggestions = [
-  "A one page portfolio website with intro, projects and contact section",
+  "A one-page portfolio with intro, projects and contact",
   "Minimalist task manager for iOS",
 ]
 
@@ -44,56 +43,69 @@ export const HeroSection = () => {
     navigate(`/project/${projectId}`)
   }
 
-  const applySuggestion = (suggestion: string) => {
-    setPrompt(suggestion)
-  }
-
   return (
-    <section className="mx-auto flex max-w-3xl flex-col items-center px-6 pt-28 pb-20 text-center">
-      <Badge variant="outline" className="mb-6 gap-1.5 font-normal">
-        <Sparkles className="size-3" />
-        Powered by Sappy's visual LLM
-      </Badge>
+    <section className="relative overflow-hidden border-border border-b">
+      <div className="plotter-grid pointer-events-none absolute inset-0 opacity-60" />
 
-      <h1 className="mb-5 max-w-2xl font-semibold text-4xl tracking-tight md:text-5xl">
-        Design logic at the speed of thought.
-      </h1>
-      <p className="mb-10 max-w-xl text-base text-muted-foreground leading-relaxed">
-        Generate production-ready UI components and layouts from a single
-        sentence.
-      </p>
+      <div className="relative mx-auto max-w-4xl px-6 pt-24 pb-20">
+        <div className="mb-8 flex items-center gap-3">
+          <span className="readout text-primary">sappy/draft</span>
+          <span className="h-px flex-1 bg-border" />
+          <span className="readout">artboard 01</span>
+        </div>
 
-      <form
-        onSubmit={submitPrompt}
-        className="flex w-full max-w-2xl items-center gap-2 rounded-lg border border-border bg-card p-1.5"
-      >
-        <Sparkles className="ml-2 size-4 shrink-0 text-muted-foreground" />
-        <Input
-          type="text"
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          placeholder="Describe your app idea..."
-          className="h-9 flex-1 border-none bg-transparent shadow-none focus-visible:ring-0"
-        />
-        <Button type="submit" disabled={!prompt.trim()}>
-          Generate <ArrowRight className="size-4" />
-        </Button>
-      </form>
+        {/* The artboard: crop-marked frame is the hero's thesis. */}
+        <div className="crop-frame animate-mark-draw border border-border bg-card/60 px-6 py-14 text-foreground sm:px-14">
+          <h1 className="max-w-2xl font-semibold text-4xl leading-[1.05] tracking-tight sm:text-6xl">
+            Turn one sentence into a screen flow.
+          </h1>
+          <p className="mt-6 max-w-lg text-base text-muted-foreground leading-relaxed">
+            Sappy drafts real, sized UI screens from a single prompt, then lets
+            you edit any frame and export clean React and Tailwind.
+          </p>
 
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
-        <span className="text-muted-foreground">Try:</span>
-        {suggestions.map((suggestion) => (
-          <Button
-            key={suggestion}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => applySuggestion(suggestion)}
-            className="rounded-full font-normal text-muted-foreground"
+          <form
+            onSubmit={submitPrompt}
+            className="mt-10 flex w-full max-w-xl items-stretch border border-input bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50"
           >
-            {suggestion}
-          </Button>
-        ))}
+            <span className="readout flex items-center border-border border-r px-3 text-primary">
+              ▍
+            </span>
+            <Input
+              type="text"
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              placeholder="Describe your app idea…"
+              className="h-11 flex-1 border-none bg-transparent shadow-none focus-visible:ring-0"
+            />
+            <Button
+              type="submit"
+              disabled={!prompt.trim()}
+              className="h-11 px-4"
+            >
+              Plot <ArrowRight className="size-4" />
+            </Button>
+          </form>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="readout normal-case">try</span>
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setPrompt(suggestion)}
+                className="text-muted-foreground text-sm underline-offset-4 transition-colors hover:text-primary hover:underline"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <span className="readout">1440 × 900</span>
+          <span className="readout">status · ready</span>
+        </div>
       </div>
     </section>
   )

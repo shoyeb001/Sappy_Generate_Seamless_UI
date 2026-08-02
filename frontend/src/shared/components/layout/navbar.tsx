@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react"
 import { Link, useNavigate } from "react-router"
 import { authSessionCleared } from "~/features/auth/slice"
 import { ModeToggle } from "~/shared/components/theme/mode-toggle"
@@ -21,14 +20,14 @@ export const Navbar = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between border-border/60 border-b bg-background/80 px-6 py-3 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 flex items-center justify-between border-border border-b bg-background/80 px-6 py-3 backdrop-blur-md">
       <div className="flex items-center gap-8">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex size-6 items-center justify-center rounded-md bg-foreground text-background">
-            <Sparkles className="size-3.5" />
+        <Link to="/" className="group flex items-baseline gap-2">
+          <span className="font-semibold text-foreground text-lg leading-none tracking-tight">
+            Sappy
           </span>
-          <span className="font-semibold text-foreground tracking-tight">
-            Sappy AI
+          <span className="readout text-muted-foreground transition-colors group-hover:text-primary">
+            /draft
           </span>
         </Link>
         <div className="hidden items-center gap-6 text-muted-foreground text-sm md:flex">

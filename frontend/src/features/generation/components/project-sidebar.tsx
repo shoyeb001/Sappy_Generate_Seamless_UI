@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react"
 import { EditFramePanel } from "~/features/generation/components/edit-frame-panel"
 import { ExportControls } from "~/features/generation/components/export-controls"
 import { StepList } from "~/features/generation/components/step-list"
@@ -33,23 +32,19 @@ export const ProjectSidebar = ({
   const steps = buildSteps(project.events, project.status)
 
   return (
-    <aside className="h-fit rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground">
-          <Sparkles className="size-5" />
-        </div>
+    <aside className="crop-frame h-fit border border-border bg-card p-5">
+      <div className="flex items-center justify-between border-border border-b pb-4">
         <div>
-          <p className="text-muted-foreground text-sm">Design status</p>
-          <h1 className="font-semibold text-foreground">
+          <span className="readout text-primary">design status</span>
+          <h1 className="mt-2 font-semibold text-foreground">
             {statusCopy[project.status]}
           </h1>
         </div>
+        <span className="readout">S · flow</span>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
-        <p className="text-muted-foreground text-xs uppercase tracking-widest">
-          Prompt
-        </p>
+      <div className="mt-6 border border-border bg-muted/40 p-4">
+        <p className="readout">prompt</p>
         <p className="mt-2 text-foreground text-sm leading-6">
           {project.prompt}
         </p>
@@ -58,10 +53,8 @@ export const ProjectSidebar = ({
       <StepList steps={steps} />
 
       {project.project ? (
-        <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
-          <p className="text-muted-foreground text-xs uppercase tracking-widest">
-            Project
-          </p>
+        <div className="mt-6 border border-border bg-muted/40 p-4">
+          <p className="readout">project</p>
           <h2 className="mt-2 font-semibold text-foreground text-lg">
             {project.project.name}
           </h2>
@@ -90,17 +83,15 @@ export const ProjectSidebar = ({
         streamError={editStreamError}
       />
 
-      <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
-        <p className="text-muted-foreground text-xs uppercase tracking-widest">
-          Selected frame
-        </p>
+      <div className="mt-6 border border-border bg-muted/40 p-4">
+        <p className="readout">selected frame</p>
         {selectedScreen ? (
           <>
             <h2 className="mt-2 truncate font-semibold text-foreground text-lg">
               {selectedScreen.name}
             </h2>
-            <p className="mt-1 text-muted-foreground text-sm">
-              {selectedScreen.width} x {selectedScreen.height}
+            <p className="mt-1 font-mono text-muted-foreground text-xs tabular-nums">
+              {selectedScreen.width} × {selectedScreen.height}
             </p>
             <ExportControls screen={selectedScreen} />
           </>

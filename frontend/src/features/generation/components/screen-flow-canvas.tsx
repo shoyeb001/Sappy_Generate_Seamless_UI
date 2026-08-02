@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react"
 import type { GeneratedScreen, ScreenPlan } from "~/features/generation/types"
 import "@xyflow/react/dist/style.css"
-import { Frame, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useEffect } from "react"
 
 type ScreenNodeData = {
@@ -21,6 +21,7 @@ type ScreenNodeData = {
   html?: string
   width?: number
   height?: number
+  marker: string
   status: "planned" | "completed"
 }
 
@@ -48,11 +49,12 @@ function ScreenNode({
     MIN_NODE_HEIGHT - NODE_LABEL_HEIGHT
   )
   const scale = Math.min(frameWidth / screenWidth, frameHeight / screenHeight)
+  const isPlanned = data.status === "planned"
 
   return (
     <div className="group relative" style={{ width: frameWidth }}>
       <NodeResizer
-        color="#67e8f9"
+        color="var(--signal)"
         isVisible={selected}
         minHeight={MIN_NODE_HEIGHT}
         minWidth={MIN_NODE_WIDTH}
@@ -60,20 +62,29 @@ function ScreenNode({
 
       <Handle type="target" position={Position.Left} className="opacity-0" />
 
-      <div className="mb-2 flex max-w-full items-center gap-2 font-medium text-[13px] text-slate-200">
-        <Frame className="size-4 shrink-0 text-cyan-300" />
-        <span className="truncate">{data.name}</span>
-        {data.status === "planned" ? (
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-cyan-300" />
+      <div className="mb-2 flex max-w-full items-center gap-2">
+        <span
+          className={[
+            "font-mono text-[11px] uppercase tracking-[0.08em]",
+            isPlanned ? "text-primary" : "text-muted-foreground",
+          ].join(" ")}
+        >
+          {isPlanned ? "plotting" : "ready"}
+        </span>
+        <span className="truncate font-medium text-[13px] text-foreground">
+          {data.name}
+        </span>
+        {isPlanned ? (
+          <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
         ) : null}
       </div>
 
       <div
         className={[
-          "overflow-hidden bg-white shadow-2xl shadow-black/35",
+          "crop-frame overflow-hidden bg-white shadow-2xl shadow-black/25 transition-colors",
           selected
-            ? "ring-2 ring-cyan-300"
-            : "ring-1 ring-white/15 transition group-hover:ring-cyan-300/70",
+            ? "text-primary ring-2 ring-primary"
+            : "text-muted-foreground ring-1 ring-border group-hover:text-primary group-hover:ring-primary/60",
         ].join(" ")}
         style={{ height: frameHeight, width: frameWidth }}
       >
@@ -88,30 +99,41 @@ function ScreenNode({
               transform: `scale(${scale})`,
               transformOrigin: "top left",
             }}
-            className="pointer-events-none border-0 bg-white"
+            className="pointer-events-none animate-plot-in border-0 bg-white"
           />
         ) : (
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0b1220]">
-            <div className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.08),transparent)]" />
-            <div className="relative grid h-44.5 w-71 grid-cols-[72px_1fr] gap-3 rounded-sm border border-white/10 bg-slate-950/70 p-3">
-              <div className="space-y-2 border-white/10 border-r pr-3">
-                <div className="h-4 rounded-sm bg-cyan-300/45" />
-                <div className="h-3 rounded-sm bg-white/16" />
-                <div className="h-3 rounded-sm bg-white/16" />
-                <div className="h-3 rounded-sm bg-white/10" />
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-muted">
+            <div className="absolute inset-0 animate-pulse bg-[linear-gradient(90deg,transparent,var(--accent),transparent)]" />
+            <div className="relative grid h-44.5 w-71 grid-cols-[72px_1fr] gap-3 border border-border bg-card p-3">
+              <div className="space-y-2 border-border border-r pr-3">
+                <div className="h-4 bg-primary/45" />
+                <div className="h-3 bg-foreground/16" />
+                <div className="h-3 bg-foreground/16" />
+                <div className="h-3 bg-foreground/10" />
               </div>
               <div className="space-y-3">
-                <div className="h-6 w-2/3 rounded-sm bg-white/20" />
+                <div className="h-6 w-2/3 bg-foreground/20" />
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="h-14 rounded-sm bg-white/12" />
-                  <div className="h-14 rounded-sm bg-cyan-300/18" />
-                  <div className="h-14 rounded-sm bg-white/12" />
+                  <div className="h-14 bg-foreground/12" />
+                  <div className="h-14 bg-primary/25" />
+                  <div className="h-14 bg-foreground/12" />
                 </div>
-                <div className="h-16 rounded-sm bg-white/10" />
+                <div className="h-16 bg-foreground/10" />
               </div>
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-between font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
+        <span className="tabular-nums">
+          {screenWidth} × {screenHeight}
+        </span>
+        <span
+          className={selected ? "text-primary tabular-nums" : "tabular-nums"}
+        >
+          {data.marker}
+        </span>
       </div>
 
       <Handle type="source" position={Position.Right} className="opacity-0" />
@@ -180,6 +202,7 @@ export function ScreenFlowCanvas({
           html: generated?.html,
           width: generated?.width,
           height: generated?.height,
+          marker: `S-${String(index + 1).padStart(2, "0")}`,
           status: generated ? "completed" : "planned",
         },
       }
@@ -214,7 +237,7 @@ export function ScreenFlowCanvas({
   }, [plannedNodes, selectedScreenId, setNodes])
 
   return (
-    <div className="h-[calc(100vh-9rem)] min-h-160 overflow-hidden rounded-lg border border-border bg-muted/30">
+    <div className="h-[calc(100vh-9rem)] min-h-160 overflow-hidden border border-border bg-muted/40">
       <ReactFlow
         nodes={nodes}
         edges={[]}
@@ -229,8 +252,8 @@ export function ScreenFlowCanvas({
         nodesDraggable
         className="[&_.react-flow__attribution]:bg-card! [&_.react-flow__attribution]:text-muted-foreground! [&_.react-flow__attribution_a]:text-muted-foreground!"
       >
-        <Background color="var(--border)" gap={24} size={1.25} />
-        <Controls className="overflow-hidden rounded-md border border-border shadow-none [&_button]:border-border! [&_button]:bg-card! [&_button]:text-foreground! [&_button:hover]:bg-muted! [&_button_path]:fill-foreground!" />
+        <Background color="var(--border)" gap={28} size={1} />
+        <Controls className="overflow-hidden border border-border shadow-none [&_button:hover]:bg-muted! [&_button]:border-border! [&_button]:bg-card! [&_button]:text-foreground! [&_button_path]:fill-foreground!" />
       </ReactFlow>
     </div>
   )

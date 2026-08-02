@@ -31,11 +31,9 @@ export const EditFramePanel = ({
     isApplying
 
   return (
-    <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
+    <div className="mt-6 border border-border bg-muted/40 p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-muted-foreground text-xs uppercase tracking-widest">
-          Edit frame
-        </p>
+        <p className="readout">edit frame</p>
         {edit.status === "understanding" || edit.status === "regenerating" ? (
           <Loader2 className="size-4 animate-spin text-primary" />
         ) : null}
@@ -43,12 +41,12 @@ export const EditFramePanel = ({
 
       <div className="mt-3 min-h-8">
         {selectedScreen ? (
-          <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 font-medium text-primary text-xs">
+          <span className="inline-flex max-w-full items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-1.5 font-medium text-primary text-xs">
             <span className="truncate">{selectedScreen.name}</span>
             <button
               type="button"
               onClick={onClearSelected}
-              className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition hover:bg-primary/20"
+              className="inline-flex size-5 shrink-0 items-center justify-center text-primary transition hover:bg-primary/20"
               aria-label="Remove selected frame"
             >
               <X className="size-3.5" />

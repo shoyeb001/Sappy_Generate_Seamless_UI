@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { KeyRound, ShieldCheck, TriangleAlert } from "lucide-react"
+import { ShieldCheck, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate, useSearchParams } from "react-router"
@@ -12,7 +12,6 @@ import {
   saveLLMCredentialsSchema,
 } from "~/features/settings/types"
 import { Alert, AlertDescription } from "~/shared/components/ui/alert"
-import { Badge } from "~/shared/components/ui/badge"
 import { Button } from "~/shared/components/ui/button"
 import {
   Card,
@@ -72,10 +71,11 @@ export const SettingsPage = () => {
 
   return (
     <section className="mx-auto flex min-h-[80vh] max-w-2xl flex-col justify-center px-6 py-16">
-      <Badge variant="outline" className="mb-5 w-fit gap-2 font-normal">
-        <KeyRound className="size-3" />
-        Provider settings
-      </Badge>
+      <div className="mb-5 flex items-center gap-3">
+        <span className="readout text-primary">provider settings</span>
+        <span className="h-px flex-1 bg-border" />
+        <span className="readout">config</span>
+      </div>
       <h1 className="font-semibold text-2xl text-foreground tracking-tight">
         Connect your AI keys
       </h1>

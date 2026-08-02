@@ -1,5 +1,3 @@
-import { GitFork, Globe, MessageCircle, Sparkles } from "lucide-react"
-
 const footerLinks = [
   "Privacy Policy",
   "Terms of Service",
@@ -8,21 +6,20 @@ const footerLinks = [
 ]
 
 export const Footer = () => (
-  <footer className="mt-12 border-border/60 border-t bg-background px-6 py-8">
+  <footer className="mt-12 border-border border-t bg-background px-6 py-8">
     <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
       <div className="text-center md:text-left">
-        <div className="mb-1 flex items-center justify-center gap-2 md:justify-start">
-          <span className="flex size-5 items-center justify-center rounded-md bg-foreground text-background">
-            <Sparkles className="size-3" />
+        <div className="mb-1 flex items-baseline justify-center gap-2 md:justify-start">
+          <span className="font-semibold text-foreground tracking-tight">
+            Sappy
           </span>
-          <span className="font-semibold text-foreground">Sappy AI</span>
+          <span className="readout text-muted-foreground">/draft</span>
         </div>
-        <p className="text-muted-foreground text-xs">
-          © {new Date().getFullYear()} Sappy AI. Code for the future of design.
-          All rights reserved.
+        <p className="readout text-muted-foreground normal-case tracking-normal">
+          © {new Date().getFullYear()} Sappy · sentence in, screen flow out
         </p>
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-6 font-medium text-muted-foreground text-sm">
+      <div className="flex flex-wrap items-center justify-center gap-6 text-muted-foreground text-sm">
         {footerLinks.map((label) => (
           <button
             key={label}
@@ -32,29 +29,6 @@ export const Footer = () => (
             {label}
           </button>
         ))}
-      </div>
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <button
-          type="button"
-          aria-label="Website"
-          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <Globe size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Community"
-          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <MessageCircle size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Source"
-          className="rounded-md p-1.5 transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <GitFork size={18} />
-        </button>
       </div>
     </div>
   </footer>
