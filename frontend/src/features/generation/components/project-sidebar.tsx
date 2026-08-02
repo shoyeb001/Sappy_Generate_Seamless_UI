@@ -5,6 +5,7 @@ import { buildSteps, statusCopy } from "~/features/generation/lib/steps"
 import type { ProjectGenerationState } from "~/features/generation/slice"
 import type { GeneratedScreen } from "~/features/generation/types"
 import { Alert, AlertDescription } from "~/shared/components/ui/alert"
+import { parseError } from "~/shared/lib/parse-error"
 
 type ProjectSidebarProps = {
   project: ProjectGenerationState
@@ -67,7 +68,11 @@ export const ProjectSidebar = ({
       {project.error || streamError ? (
         <Alert variant="destructive" className="mt-6">
           <AlertDescription>
-            {project.error ?? "Unable to connect to the generation stream."}
+            {project.error ??
+              parseError(
+                streamError,
+                "Unable to connect to the generation stream."
+              )}
           </AlertDescription>
         </Alert>
       ) : null}

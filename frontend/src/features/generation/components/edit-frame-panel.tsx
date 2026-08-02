@@ -3,6 +3,7 @@ import type { ProjectGenerationState } from "~/features/generation/slice"
 import type { GeneratedScreen } from "~/features/generation/types"
 import { Button } from "~/shared/components/ui/button"
 import { Textarea } from "~/shared/components/ui/textarea"
+import { parseError } from "~/shared/lib/parse-error"
 
 type EditFramePanelProps = {
   edit: ProjectGenerationState["edit"]
@@ -101,7 +102,8 @@ export const EditFramePanel = ({
 
       {edit.error || streamError ? (
         <p className="mt-3 text-destructive text-sm">
-          {edit.error ?? "Unable to connect to the edit stream."}
+          {edit.error ??
+            parseError(streamError, "Unable to connect to the edit stream.")}
         </p>
       ) : null}
     </div>

@@ -24,6 +24,21 @@ export const ProjectPage = () => {
     projectId ? state.generation.projects[projectId] : undefined
   )
 
+  const streamErrorStatus =
+    streamState.error && typeof streamState.error === "object"
+      ? (streamState.error as { status?: number | string }).status
+      : undefined
+
+  useEffect(() => {
+    if (!projectId || streamErrorStatus !== 403) {
+      return
+    }
+
+    navigate(
+      `/settings?required=1&next=${encodeURIComponent(`/project/${projectId}`)}`
+    )
+  }, [navigate, projectId, streamErrorStatus])
+
   useEffect(() => {
     if (!projectId || !project?.prompt || startedRef.current) {
       return
